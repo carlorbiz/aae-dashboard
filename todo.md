@@ -42,3 +42,10 @@
 - [ ] User guide
 - [ ] API documentation
 - [ ] Deployment guide
+
+## AI Chat Interface
+- [x] AI chat component with message history
+- [x] Chat backend API with LLM integration
+- [x] Context-aware responses about dashboard data
+- [x] Ability to query platforms, workflows, and metrics
+- [ ] Conversational updates to dashboard settings

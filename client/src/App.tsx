@@ -10,6 +10,7 @@ import PlatformIntegrations from "./pages/PlatformIntegrations";
 import LLMMetrics from "./pages/LLMMetrics";
 import Workflows from "./pages/Workflows";
 import KnowledgeLake from "./pages/KnowledgeLake";
+import AIChat from "./pages/AIChat";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path={"/llm-metrics"} component={LLMMetrics} />
       <Route path={"/workflows"} component={Workflows} />
       <Route path={"/knowledge"} component={KnowledgeLake} />
+      <Route path={"/chat"} component={AIChat} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
