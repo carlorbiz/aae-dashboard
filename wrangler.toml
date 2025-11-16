@@ -1,0 +1,26 @@
+name = "aae-dashboard"
+main = "dist/index.js"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "aae-dashboard-db"
+database_id = "899f0964-030d-4f16-94ca-d41eacffa9d7"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+
+# Build configuration
+[build]
+command = "npm run build"
+
+# Development configuration
+[env.development]
+name = "aae-dashboard-dev"
+
+# Production configuration  
+[env.production]
+name = "aae-dashboard-prod"

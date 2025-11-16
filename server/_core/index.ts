@@ -3,6 +3,9 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import session from "express-session";
+import passport from "../auth/google-strategy";
+import authRoutes from "../routes/auth.js";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -33,6 +36,25 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Session configuration
+  app.use(session({
+    secret: process.env.JWT_SECRET || "fallback-secret-change-in-production",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  } ));
+
+  // Initialize Passport
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  // Auth routes (Google OAuth)
+  app.use(authRoutes);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API
