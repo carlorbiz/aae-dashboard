@@ -41,6 +41,21 @@ The dashboard is designed to work seamlessly with the AAE's hybrid architecture:
 5. **knowledgeItems** - Cached references to knowledge base content from all sources
 6. **notifications** - Internal notification system for dashboard alerts
 
+### Knowledge Graph Tables (New - 2025-11-17)
+
+7. **entities** - Core knowledge graph nodes with semantic state pipeline
+   - 6 entity types: Consulting, ExecutiveAI, Agents, Content, Technology, ClientIntelligence
+   - 4 semantic states: RAW → DRAFT → COOKED → CANONICAL
+   - Tracks source, properties (JSON), and versioning
+8. **relationships** - Edges connecting entities in the knowledge graph
+   - Typed relationships (mentions, depends_on, created_by, etc.)
+   - Weight (1-10) for relationship strength
+   - Semantic states for relationship maturity
+9. **semantic_history** - Audit trail for semantic state transitions
+   - Who changed it (userId)
+   - Why (reason text)
+   - Complete state transition history
+
 ## 🚀 Features
 
 ### ✅ Implemented
@@ -51,14 +66,32 @@ The dashboard is designed to work seamlessly with the AAE's hybrid architecture:
 - **Workflows Page** - View and manage n8n, Zapier, and MCP workflows with run statistics
 - **Knowledge Lake Page** - Search interface for unified knowledge access (UI ready, integrations pending)
 - **AI Assistant** - Context-aware chat interface that pulls live data from your entire AAE
+- **Knowledge Graph Foundation** (New - 2025-11-17)
+  - **Entity Management** - Create, read, update entities across 6 business categories
+  - **Relationship Mapping** - Link entities with typed, weighted relationships
+  - **Semantic Pipeline** - RAW → DRAFT → COOKED → CANONICAL state progression
+  - **Audit Trail** - Complete history of semantic state transitions
+  - **Graph Queries** - Traverse relationships, search entities, filter by state
+  - **8 tRPC Endpoints** - Type-safe API for all knowledge graph operations
 - **Dark Theme** - Professional dark mode with Inter font
 - **Responsive Design** - Works seamlessly on all devices
 - **Role-Based Access Control** - Admin and user roles with appropriate permissions
 
 ### 🔄 In Progress / Planned
 
+- **Knowledge Ingestion** (In Progress - 2025-11-17)
+  - Transcript parser for conversation files
+  - Automatic entity extraction (agents, topics, decisions, action items)
+  - Relationship creation from conversation context
+  - Ingestion tRPC endpoint
+- **Knowledge Graph Visualization** (Next)
+  - Interactive D3.js/Cytoscape.js graph viewer
+  - Click-to-explore entity relationships
+  - Real-time updates as knowledge grows
+  - Manus to implement UI (coordinated by CC)
 - **Platform API Integrations** - Connect to Notion, Google Drive, GitHub, Slack APIs
 - **Railway Knowledge Lake API Integration** - Connect to Mem0-based semantic search
+- **Vector Search Layer** - Add Cloudflare Vectorize for semantic retrieval
 - **Sync Workflows** - Automated data synchronization via n8n
 - **Real-time Notifications** - WebSocket or Server-Sent Events for live updates
 - **Data Visualizations** - Charts and graphs for metrics and trends
@@ -197,6 +230,19 @@ The dashboard is deployed on the Manus platform with:
 
 ---
 
-**Last Updated**: 2025-11-04  
-**Status**: Initial implementation complete, platform integrations in progress  
-**Version**: 1.0.0-alpha
+**Last Updated**: 2025-11-17
+**Status**: Knowledge Graph foundation complete (Day 1), ingestion system in progress (Day 2)
+**Version**: 1.1.0-alpha
+
+### Recent Updates
+
+**2025-11-17** - Knowledge Graph Foundation (Phase 1, Day 1)
+- Added 3 knowledge graph tables to D1 database (entities, relationships, semantic_history)
+- Implemented 8 tRPC endpoints for knowledge graph operations
+- Semantic state pipeline: RAW → DRAFT → COOKED → CANONICAL
+- Admin-only promotion to CANONICAL state
+- Relationship traversal and graph queries
+- Full audit trail for state transitions
+- SQLite migration applied successfully to local D1
+- TypeScript compilation: 0 errors
+- 7 database indexes for query performance

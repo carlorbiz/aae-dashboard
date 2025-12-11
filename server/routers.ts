@@ -5,11 +5,15 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { chatRouter } from "./routers/chat";
+import { knowledgeRouter } from "./routers/knowledge";
+import { acrmRouter } from "./routers/acrrm";
 
 export const appRouter = router({
   system: systemRouter,
   chat: chatRouter,
-  
+  knowledgeGraph: knowledgeRouter,
+  acrrm: acrmRouter,
+
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

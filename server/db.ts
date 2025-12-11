@@ -1,8 +1,9 @@
 import { eq, and, desc, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import { 
-  InsertUser, 
-  users, 
+import { drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
+import {
+  InsertUser,
+  users,
   platformIntegrations,
   InsertPlatformIntegration,
   PlatformIntegration,
@@ -21,12 +22,15 @@ import {
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
-let _db: ReturnType<typeof drizzle> | null = null;
+let _db: ReturnType<typeof drizzleSqlite> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      // Use better-sqlite3 for local D1 SQLite database
+      const sqlite = new Database(process.env.DATABASE_URL);
+      _db = drizzleSqlite(sqlite);
+      console.log("[Database] Connected to SQLite database at:", process.env.DATABASE_URL);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;

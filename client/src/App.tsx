@@ -11,6 +11,7 @@ import LLMMetrics from "./pages/LLMMetrics";
 import Workflows from "./pages/Workflows";
 import KnowledgeLake from "./pages/KnowledgeLake";
 import AIChat from "./pages/AIChat";
+import ACRRMPipeline from "./pages/ACRRMPipeline";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path={"/workflows"} component={Workflows} />
       <Route path={"/knowledge"} component={KnowledgeLake} />
       <Route path={"/chat"} component={AIChat} />
+      <Route path={"/acrrm"} component={ACRRMPipeline} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

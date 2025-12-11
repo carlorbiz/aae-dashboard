@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "filePath": "C:\\Users\\carlo\\Development\\mem0-sync\\mem0\\conversations\\exports\\archive\\Claude_20251101.md",
+    "fileDate": "2025-10-31T13:00:00.000Z",
+    "conversationType": "claude-gui",
+    "participatingAgents": [
+      "Claude",
+      "CC",
+      "Claude Code",
+      "Manus",
+      "User"
+    ],
+    "fileSize": 13635
+  },
+  "entities": [
+    {
+      "type": "Agents",
+      "name": "Claude",
+      "confidence": 0.95
+    },
+    {
+      "type": "Agents",
+      "name": "Claude Code",
+      "confidence": 0.95
+    },
+    {
+      "type": "Agents",
+      "name": "Manus",
+      "confidence": 0.95
+    },
+    {
+      "type": "Technology",
+      "name": "Notion",
+      "confidence": 0.9
+    },
+    {
+      "type": "Technology",
+      "name": "n8n",
+      "confidence": 0.95
+    },
+    {
+      "type": "Technology",
+      "name": "Zapier",
+      "confidence": 0.9
+    },
+    {
+      "type": "Technology",
+      "name": "mem0",
+      "confidence": 0.95
+    },
+    {
+      "type": "Technology",
+      "name": "MCP",
+      "confidence": 0.85
+    },
+    {
+      "type": "Technology",
+      "name": "Git",
+      "confidence": 0.8
+    },
+    {
+      "type": "ExecutiveAI",
+      "name": "Knowledge Lake",
+      "confidence": 0.85
+    },
+    {
+      "type": "Consulting",
+      "name": "RWAV",
+      "confidence": 0.9
+    },
+    {
+      "type": "Consulting",
+      "name": "strategic plan",
+      "confidence": 0.75
+    },
+    {
+      "type": "ClientIntelligence",
+      "name": "automation",
+      "confidence": 0.65
+    }
+  ],
+  "relationships": []
+}

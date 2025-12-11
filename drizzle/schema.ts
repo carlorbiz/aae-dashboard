@@ -119,3 +119,72 @@ export const notifications = mysqlTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+/**
+ * Knowledge Graph Entities - core nodes in the semantic network
+ */
+export const entities = mysqlTable("entities", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  entityType: mysqlEnum("entityType", [
+    "Consulting",           // Strategic reports, client projects, consulting deliverables
+    "ExecutiveAI",          // Coaching programs, executive tools, book projects
+    "Agents",               // Fred, Claude, Manus, Penny, Colin, etc.
+    "Content",              // Conversations, transcripts, research, documentation
+    "Technology",           // Tools, platforms, integrations (Notion, n8n, Railway)
+    "ClientIntelligence"    // Client contexts, industry insights, case studies
+  ]).notNull(),
+  name: varchar("name", { length: 500 }).notNull(),
+  description: text("description"),
+  semanticState: mysqlEnum("semanticState", [
+    "RAW",        // Initial capture, no processing
+    "DRAFT",      // Processed by agents, needs review
+    "COOKED",     // Synthesized by Fred, ready for use
+    "CANONICAL"   // Approved by Carla, authoritative truth
+  ]).default("RAW").notNull(),
+  properties: json("properties"), // Entity-specific metadata
+  sourceType: varchar("sourceType", { length: 100 }), // e.g., "transcript", "notion_page", "github_issue"
+  sourceId: varchar("sourceId", { length: 255 }), // External ID in source system
+  sourceUrl: varchar("sourceUrl", { length: 1000 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Entity = typeof entities.$inferSelect;
+export type InsertEntity = typeof entities.$inferInsert;
+
+/**
+ * Knowledge Graph Relationships - edges connecting entities
+ */
+export const relationships = mysqlTable("relationships", {
+  id: int("id").autoincrement().primaryKey(),
+  fromEntityId: int("fromEntityId").notNull(),
+  toEntityId: int("toEntityId").notNull(),
+  relationshipType: varchar("relationshipType", { length: 100 }).notNull(), // e.g., "mentions", "depends_on", "created_by", "related_to"
+  weight: int("weight").default(1).notNull(), // Relationship strength (1-10)
+  semanticState: mysqlEnum("semanticState", ["RAW", "DRAFT", "COOKED", "CANONICAL"]).default("RAW").notNull(),
+  properties: json("properties"), // Relationship-specific metadata
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Relationship = typeof relationships.$inferSelect;
+export type InsertRelationship = typeof relationships.$inferInsert;
+
+/**
+ * Semantic History - audit trail of semantic state transitions
+ */
+export const semanticHistory = mysqlTable("semantic_history", {
+  id: int("id").autoincrement().primaryKey(),
+  entityId: int("entityId"),
+  relationshipId: int("relationshipId"),
+  previousState: mysqlEnum("previousState", ["RAW", "DRAFT", "COOKED", "CANONICAL"]).notNull(),
+  newState: mysqlEnum("newState", ["RAW", "DRAFT", "COOKED", "CANONICAL"]).notNull(),
+  changedBy: int("changedBy").notNull(), // userId who made the change
+  reason: text("reason"), // Why the transition occurred
+  metadata: json("metadata"), // Additional context
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SemanticHistory = typeof semanticHistory.$inferSelect;
+export type InsertSemanticHistory = typeof semanticHistory.$inferInsert;
