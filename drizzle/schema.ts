@@ -1,17 +1,28 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json } from "drizzle-orm/mysql-core";
+import { pgTable, pgEnum, serial, text, timestamp, varchar, boolean, json, integer } from "drizzle-orm/pg-core";
+
+// Define PostgreSQL enums
+export const userRoleEnum = pgEnum("role", ["user", "admin"]);
+export const platformEnum = pgEnum("platform", ["notion", "google_drive", "github", "slack", "railway", "docker", "zapier", "mcp"]);
+export const integrationStatusEnum = pgEnum("integration_status", ["connected", "disconnected", "error"]);
+export const workflowTypeEnum = pgEnum("workflow_type", ["n8n", "zapier", "mcp"]);
+export const workflowStatusEnum = pgEnum("workflow_status", ["active", "paused", "error", "disabled"]);
+export const sourceEnum = pgEnum("source", ["notion", "google_drive", "github", "railway"]);
+export const notificationTypeEnum = pgEnum("notification_type", ["info", "success", "warning", "error"]);
+export const entityTypeEnum = pgEnum("entity_type", ["Consulting", "ExecutiveAI", "Agents", "Content", "Technology", "ClientIntelligence"]);
+export const semanticStateEnum = pgEnum("semantic_state", ["RAW", "DRAFT", "COOKED", "CANONICAL"]);
 
 /**
  * Core user table backing auth flow.
  */
-export const users = mysqlTable("users", {
-  id: int("id").autoincrement().primaryKey(),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: userRoleEnum("role").default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
@@ -21,16 +32,16 @@ export type InsertUser = typeof users.$inferInsert;
 /**
  * Platform integrations - stores connection status and metadata
  */
-export const platformIntegrations = mysqlTable("platform_integrations", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  platform: mysqlEnum("platform", ["notion", "google_drive", "github", "slack", "railway", "docker", "zapier", "mcp"]).notNull(),
-  status: mysqlEnum("status", ["connected", "disconnected", "error"]).default("disconnected").notNull(),
+export const platformIntegrations = pgTable("platform_integrations", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  platform: platformEnum("platform").notNull(),
+  status: integrationStatusEnum("status").default("disconnected").notNull(),
   lastSynced: timestamp("lastSynced"),
   metadata: json("metadata"), // Store platform-specific config
   errorMessage: text("errorMessage"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type PlatformIntegration = typeof platformIntegrations.$inferSelect;
@@ -39,20 +50,20 @@ export type InsertPlatformIntegration = typeof platformIntegrations.$inferInsert
 /**
  * LLM performance metrics - tracks LLM usage and performance
  */
-export const llmMetrics = mysqlTable("llm_metrics", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
+export const llmMetrics = pgTable("llm_metrics", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
   llmProvider: varchar("llmProvider", { length: 100 }).notNull(), // e.g., "openai", "anthropic", "google"
   modelName: varchar("modelName", { length: 100 }).notNull(), // e.g., "gpt-4", "claude-3"
-  requestCount: int("requestCount").default(0).notNull(),
-  successCount: int("successCount").default(0).notNull(),
-  errorCount: int("errorCount").default(0).notNull(),
-  totalTokens: int("totalTokens").default(0).notNull(),
-  totalCost: int("totalCost").default(0).notNull(), // Store in cents to avoid decimal
-  avgResponseTime: int("avgResponseTime").default(0).notNull(), // milliseconds
+  requestCount: integer("requestCount").default(0).notNull(),
+  successCount: integer("successCount").default(0).notNull(),
+  errorCount: integer("errorCount").default(0).notNull(),
+  totalTokens: integer("totalTokens").default(0).notNull(),
+  totalCost: integer("totalCost").default(0).notNull(), // Store in cents to avoid decimal
+  avgResponseTime: integer("avgResponseTime").default(0).notNull(), // milliseconds
   date: timestamp("date").notNull(), // Daily aggregation
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type LLMMetric = typeof llmMetrics.$inferSelect;
@@ -61,21 +72,21 @@ export type InsertLLMMetric = typeof llmMetrics.$inferInsert;
 /**
  * Workflow automations - tracks n8n and Zapier workflows
  */
-export const workflows = mysqlTable("workflows", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  workflowType: mysqlEnum("workflowType", ["n8n", "zapier", "mcp"]).notNull(),
+export const workflows = pgTable("workflows", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  workflowType: workflowTypeEnum("workflowType").notNull(),
   workflowId: varchar("workflowId", { length: 255 }).notNull(), // External workflow ID
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
-  status: mysqlEnum("status", ["active", "paused", "error", "disabled"]).default("active").notNull(),
+  status: workflowStatusEnum("status").default("active").notNull(),
   lastRun: timestamp("lastRun"),
-  runCount: int("runCount").default(0).notNull(),
-  successCount: int("successCount").default(0).notNull(),
-  errorCount: int("errorCount").default(0).notNull(),
+  runCount: integer("runCount").default(0).notNull(),
+  successCount: integer("successCount").default(0).notNull(),
+  errorCount: integer("errorCount").default(0).notNull(),
   metadata: json("metadata"), // Store workflow-specific data
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Workflow = typeof workflows.$inferSelect;
@@ -84,10 +95,10 @@ export type InsertWorkflow = typeof workflows.$inferInsert;
 /**
  * Knowledge Lake items - cached references to knowledge base content
  */
-export const knowledgeItems = mysqlTable("knowledge_items", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  source: mysqlEnum("source", ["notion", "google_drive", "github", "railway"]).notNull(),
+export const knowledgeItems = pgTable("knowledge_items", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  source: sourceEnum("source").notNull(),
   sourceId: varchar("sourceId", { length: 255 }).notNull(), // External item ID
   title: varchar("title", { length: 500 }).notNull(),
   contentPreview: text("contentPreview"), // First 500 chars
@@ -96,7 +107,7 @@ export const knowledgeItems = mysqlTable("knowledge_items", {
   lastModified: timestamp("lastModified"),
   metadata: json("metadata"), // Store source-specific data
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type KnowledgeItem = typeof knowledgeItems.$inferSelect;
@@ -105,12 +116,12 @@ export type InsertKnowledgeItem = typeof knowledgeItems.$inferInsert;
 /**
  * System notifications - internal notifications for the dashboard
  */
-export const notifications = mysqlTable("notifications", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   message: text("message").notNull(),
-  type: mysqlEnum("type", ["info", "success", "warning", "error"]).default("info").notNull(),
+  type: notificationTypeEnum("type").default("info").notNull(),
   isRead: boolean("isRead").default(false).notNull(),
   source: varchar("source", { length: 100 }), // e.g., "slack", "github", "workflow"
   metadata: json("metadata"),
@@ -123,31 +134,19 @@ export type InsertNotification = typeof notifications.$inferInsert;
 /**
  * Knowledge Graph Entities - core nodes in the semantic network
  */
-export const entities = mysqlTable("entities", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  entityType: mysqlEnum("entityType", [
-    "Consulting",           // Strategic reports, client projects, consulting deliverables
-    "ExecutiveAI",          // Coaching programs, executive tools, book projects
-    "Agents",               // Fred, Claude, Manus, Penny, Colin, etc.
-    "Content",              // Conversations, transcripts, research, documentation
-    "Technology",           // Tools, platforms, integrations (Notion, n8n, Railway)
-    "ClientIntelligence"    // Client contexts, industry insights, case studies
-  ]).notNull(),
+export const entities = pgTable("entities", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  entityType: entityTypeEnum("entityType").notNull(),
   name: varchar("name", { length: 500 }).notNull(),
   description: text("description"),
-  semanticState: mysqlEnum("semanticState", [
-    "RAW",        // Initial capture, no processing
-    "DRAFT",      // Processed by agents, needs review
-    "COOKED",     // Synthesized by Fred, ready for use
-    "CANONICAL"   // Approved by Carla, authoritative truth
-  ]).default("RAW").notNull(),
+  semanticState: semanticStateEnum("semanticState").default("RAW").notNull(),
   properties: json("properties"), // Entity-specific metadata
   sourceType: varchar("sourceType", { length: 100 }), // e.g., "transcript", "notion_page", "github_issue"
   sourceId: varchar("sourceId", { length: 255 }), // External ID in source system
   sourceUrl: varchar("sourceUrl", { length: 1000 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Entity = typeof entities.$inferSelect;
@@ -156,16 +155,16 @@ export type InsertEntity = typeof entities.$inferInsert;
 /**
  * Knowledge Graph Relationships - edges connecting entities
  */
-export const relationships = mysqlTable("relationships", {
-  id: int("id").autoincrement().primaryKey(),
-  fromEntityId: int("fromEntityId").notNull(),
-  toEntityId: int("toEntityId").notNull(),
+export const relationships = pgTable("relationships", {
+  id: serial("id").primaryKey(),
+  fromEntityId: integer("fromEntityId").notNull(),
+  toEntityId: integer("toEntityId").notNull(),
   relationshipType: varchar("relationshipType", { length: 100 }).notNull(), // e.g., "mentions", "depends_on", "created_by", "related_to"
-  weight: int("weight").default(1).notNull(), // Relationship strength (1-10)
-  semanticState: mysqlEnum("semanticState", ["RAW", "DRAFT", "COOKED", "CANONICAL"]).default("RAW").notNull(),
+  weight: integer("weight").default(1).notNull(), // Relationship strength (1-10)
+  semanticState: semanticStateEnum("semanticState").default("RAW").notNull(),
   properties: json("properties"), // Relationship-specific metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Relationship = typeof relationships.$inferSelect;
@@ -174,13 +173,13 @@ export type InsertRelationship = typeof relationships.$inferInsert;
 /**
  * Semantic History - audit trail of semantic state transitions
  */
-export const semanticHistory = mysqlTable("semantic_history", {
-  id: int("id").autoincrement().primaryKey(),
-  entityId: int("entityId"),
-  relationshipId: int("relationshipId"),
-  previousState: mysqlEnum("previousState", ["RAW", "DRAFT", "COOKED", "CANONICAL"]).notNull(),
-  newState: mysqlEnum("newState", ["RAW", "DRAFT", "COOKED", "CANONICAL"]).notNull(),
-  changedBy: int("changedBy").notNull(), // userId who made the change
+export const semanticHistory = pgTable("semantic_history", {
+  id: serial("id").primaryKey(),
+  entityId: integer("entityId"),
+  relationshipId: integer("relationshipId"),
+  previousState: semanticStateEnum("previousState").notNull(),
+  newState: semanticStateEnum("newState").notNull(),
+  changedBy: integer("changedBy").notNull(), // userId who made the change
   reason: text("reason"), // Why the transition occurred
   metadata: json("metadata"), // Additional context
   createdAt: timestamp("createdAt").defaultNow().notNull(),

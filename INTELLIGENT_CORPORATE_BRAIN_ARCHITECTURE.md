@@ -65,16 +65,16 @@ Successfully implemented the foundational database infrastructure for the Intell
    - User context integration via tRPC protected procedures
 
 4. **Database Migration** ([drizzle/0002_sqlite_knowledge_graph.sql](github-projects/aae-dashboard/drizzle/0002_sqlite_knowledge_graph.sql))
-   - SQLite-compatible schema (D1 database)
-   - Applied successfully via WSL wrangler CLI
+   - **PostgreSQL schema** (Railway database - shared with Knowledge Lake API)
+   - Applied successfully via Drizzle migrations
    - Indexes created for performance optimization
-   - CHECK constraints for enum validation
+   - Native PostgreSQL data types and constraints
 
 #### Technical Decisions
 
-- **SQLite over MySQL**: Adapted to Cloudflare D1's SQLite dialect with TEXT+CHECK constraints instead of native enums
+- **PostgreSQL on Railway**: Shared production database with Knowledge Lake API for unified data access across all services
+- **Migration from D1**: Changed from Cloudflare D1 (SQLite) to PostgreSQL (December 2025) for production deployment to Hostinger
 - **Zod v4 patterns**: Used `z.record(z.string(), z.any())` for proper type safety on JSON properties
-- **WSL integration**: Leveraged Windows Subsystem for Linux for wrangler CLI operations
 - **Semantic pipeline**: Enforced forward-only state progression with audit logging
 
 #### Current Status
@@ -106,7 +106,7 @@ Currently working on building the ingestion pipeline to populate the knowledge g
 
 3. Testing with real data
    - Test 1: Ingest sample conversation from agent-conversations/
-   - Test 2: Verify entities and relationships in D1 database
+   - Test 2: Verify entities and relationships in PostgreSQL database (Railway)
    - Revision: Fix issues discovered during testing
 
 **Next**: Begin PLAN - ITERATION 1 for knowledge ingestion architecture

@@ -1,26 +1,12 @@
 {
   "version": "7",
-  "dialect": "mysql",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "5",
-      "when": 1762208951196,
-      "tag": "0000_right_morbius",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1762209010931,
-      "tag": "0001_high_morbius",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1763373401143,
-      "tag": "0002_medical_nuke",
+      "version": "7",
+      "when": 1765544063654,
+      "tag": "0000_material_meteorite",
       "breakpoints": true
     }
   ]
