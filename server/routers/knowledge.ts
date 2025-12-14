@@ -14,6 +14,7 @@ import { ConversationParser } from "../../lib/ingestion/conversationParser";
 import { EntityExtractor } from "../../lib/ingestion/entityExtractor";
 import { RelationshipBuilder } from "../../lib/ingestion/relationshipBuilder";
 import { FileValidator, EntityValidator } from "../../lib/ingestion/validators";
+import axios from "axios";
 
 /**
  * Knowledge Graph Router - CRUD operations for entities and relationships
@@ -710,6 +711,77 @@ export const knowledgeRouter = router({
             code: 'DATABASE_ERROR',
             message: error.message,
           },
+        };
+      }
+    }),
+
+  /**
+   * Get conversations from Knowledge Lake API
+   */
+  getConversations: protectedProcedure
+    .input(
+      z.object({
+        query: z.string().optional(),
+        agent: z.string().optional(),
+        entityType: z.string().optional(),
+        limit: z.number().min(1).max(100).default(20),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const userId = ctx.user?.id || 1;
+      const knowledgeLakeUrl = process.env.KNOWLEDGE_LAKE_URL || 'https://knowledge-lake-api-production.up.railway.app';
+
+      try {
+        const params = new URLSearchParams({
+          userId: userId.toString(),
+          limit: input.limit.toString(),
+        });
+
+        if (input.query) params.append('q', input.query);
+        if (input.agent) params.append('agent', input.agent);
+        if (input.entityType) params.append('entityType', input.entityType);
+
+        const response = await axios.get(`${knowledgeLakeUrl}/api/conversations?${params.toString()}`);
+
+        return {
+          success: true,
+          conversations: response.data.conversations || [],
+          total: response.data.total || 0,
+          filters: response.data.filters || {},
+        };
+      } catch (error: any) {
+        console.error('[Knowledge Lake] Error fetching conversations:', error.message);
+        return {
+          success: false,
+          conversations: [],
+          total: 0,
+          error: error.message,
+        };
+      }
+    }),
+
+  /**
+   * Get Knowledge Lake statistics
+   */
+  getKnowledgeLakeStats: protectedProcedure
+    .query(async ({ ctx }) => {
+      const userId = ctx.user?.id || 1;
+      const knowledgeLakeUrl = process.env.KNOWLEDGE_LAKE_URL || 'https://knowledge-lake-api-production.up.railway.app';
+
+      try {
+        const response = await axios.get(`${knowledgeLakeUrl}/api/stats?userId=${userId}`);
+        return {
+          success: true,
+          ...response.data,
+        };
+      } catch (error: any) {
+        console.error('[Knowledge Lake] Error fetching stats:', error.message);
+        return {
+          success: false,
+          totalConversations: 0,
+          totalEntities: 0,
+          totalRelationships: 0,
+          error: error.message,
         };
       }
     }),
