@@ -2,6 +2,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import * as db from "../db";
+import axios from "axios";
 
 export const chatRouter = router({
   // Send a message and get AI response
@@ -17,12 +18,29 @@ export const chatRouter = router({
       const userId = ctx.user.id;
 
       // Gather context about the user's AAE
-      const [platforms, workflows, llmSummary, knowledgeItems] = await Promise.all([
+      const [platforms, workflows, llmSummary] = await Promise.all([
         db.getPlatformIntegrations(userId),
         db.getWorkflows(userId),
         db.getLLMSummary(userId),
-        db.getKnowledgeItems(userId, 10),
       ]);
+
+      // Query Knowledge Lake for relevant context
+      const knowledgeLakeUrl = process.env.KNOWLEDGE_LAKE_URL || 'https://knowledge-lake-api-production.up.railway.app';
+      let relevantKnowledge: any[] = [];
+
+      try {
+        const response = await axios.post(`${knowledgeLakeUrl}/api/query`, {
+          query: input.message,
+          userId: userId,
+          limit: 5
+        });
+
+        if (response.data.success && response.data.results) {
+          relevantKnowledge = response.data.results;
+        }
+      } catch (error: any) {
+        console.error('[Chat] Failed to query Knowledge Lake:', error.message);
+      }
 
       // Build context for the AI
       const contextMessage = `You are an AI assistant helping the user manage their AI Automation Ecosystem (AAE) dashboard. Here's the current state of their system:
@@ -39,10 +57,17 @@ LLM METRICS:
 - Total Cost: $${llmSummary?.totalCost ? (llmSummary.totalCost / 100).toFixed(2) : '0.00'}
 - Avg Response Time: ${llmSummary?.avgResponseTime || 0}ms
 
-RECENT KNOWLEDGE ITEMS:
-${knowledgeItems.slice(0, 5).map(k => `- ${k.title} (${k.source})`).join('\n')}
+RELEVANT KNOWLEDGE FROM YOUR CONVERSATIONS:
+${relevantKnowledge.length > 0 ? relevantKnowledge.map(k => {
+  if (k.content) {
+    return `- ${k.content.substring(0, 200)}${k.content.length > 200 ? '...' : ''}`;
+  } else if (k.topic) {
+    return `- Topic: ${k.topic}`;
+  }
+  return '- (No content available)';
+}).join('\n') : '(No relevant knowledge found)'}
 
-The user can ask you questions about their dashboard, request insights, or ask you to help update settings. Be helpful, concise, and actionable. If the user asks to update something, explain what you would do (note: actual updates require additional implementation).`;
+The user can ask you questions about their dashboard, request insights, or ask you to help update settings. You have access to all their past conversations and knowledge through the Knowledge Lake. Be helpful, concise, and actionable. If the user asks to update something, explain what you would do (note: actual updates require additional implementation).`;
 
       // Build message history
       const messages = [
