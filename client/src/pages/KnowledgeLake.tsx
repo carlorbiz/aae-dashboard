@@ -14,22 +14,22 @@ export default function KnowledgeLake() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
 
-  const { data: allItems, isLoading: allItemsLoading } = trpc.knowledge.list.useQuery(
-    { limit: 50 },
-    { enabled: !!user && !activeSearch }
+  const { data: conversationsData, isLoading: conversationsLoading } = trpc.knowledge.getConversations.useQuery(
+    { limit: 50, query: activeSearch },
+    { enabled: !!user }
   );
 
-  const { data: searchResults, isLoading: searchLoading } = trpc.knowledge.search.useQuery(
-    { searchTerm: activeSearch },
-    { enabled: !!user && !!activeSearch }
+  const { data: stats, isLoading: statsLoading } = trpc.knowledge.getKnowledgeLakeStats.useQuery(
+    undefined,
+    { enabled: !!user }
   );
 
   if (authLoading) {
     return <DashboardLayout><div className="p-6"><Skeleton className="h-96 w-full" /></div></DashboardLayout>;
   }
 
-  const items = activeSearch ? searchResults : allItems;
-  const isLoading = activeSearch ? searchLoading : allItemsLoading;
+  const conversations = conversationsData?.conversations || [];
+  const isLoading = conversationsLoading;
 
   const handleSearch = () => {
     setActiveSearch(searchTerm);
@@ -41,15 +41,22 @@ export default function KnowledgeLake() {
   };
 
   const getSourceColor = (source: string) => {
-    switch (source) {
-      case "notion":
-        return "bg-black text-white border-black";
-      case "google_drive":
+    const normalizedSource = source.toLowerCase();
+    switch (normalizedSource) {
+      case "fred":
         return "bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30";
-      case "github":
-        return "bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30";
-      case "railway":
+      case "claude":
+        return "bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30";
+      case "colin":
+        return "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30";
+      case "penny":
         return "bg-pink-500/20 text-pink-600 dark:text-pink-400 border-pink-500/30";
+      case "gemini":
+        return "bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30";
+      case "grok":
+        return "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border-cyan-500/30";
+      case "manus":
+        return "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/30";
       default:
         return "bg-gray-500/20 text-gray-600 dark:text-gray-400 border-gray-500/30";
     }
@@ -100,12 +107,12 @@ export default function KnowledgeLake() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeSearch ? "Search Results" : "Recent Items"}
+              {activeSearch ? "Search Results" : "Recent Conversations"}
             </CardTitle>
             <CardDescription>
-              {activeSearch 
-                ? `Found ${items?.length || 0} items matching your search`
-                : "Latest items from your knowledge sources"}
+              {activeSearch
+                ? `Found ${conversations.length} conversations matching your search`
+                : `${stats?.totalConversations || conversations.length} conversations from your Knowledge Lake`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -115,50 +122,49 @@ export default function KnowledgeLake() {
                   <Skeleton key={i} className="h-24 w-full" />
                 ))}
               </div>
-            ) : items && items.length > 0 ? (
+            ) : conversations && conversations.length > 0 ? (
               <div className="space-y-4">
-                {items.map((item) => (
-                  <div key={item.id} className="p-4 rounded-lg bg-muted/50 space-y-2 hover:bg-muted/70 transition-colors">
+                {conversations.map((conversation: any, idx: number) => (
+                  <div key={conversation.id || idx} className="p-4 rounded-lg bg-muted/50 space-y-2 hover:bg-muted/70 transition-colors">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-muted-foreground" />
-                          <h3 className="font-semibold">{item.title}</h3>
+                          <h3 className="font-semibold">{conversation.topic || "Conversation"}</h3>
                         </div>
-                        {item.contentPreview && (
+                        {conversation.content && (
                           <p className="text-sm text-muted-foreground line-clamp-2">
-                            {item.contentPreview}
+                            {conversation.content}
                           </p>
+                        )}
+                        {conversation.entities && conversation.entities.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {conversation.entities.slice(0, 5).map((entity: string, i: number) => (
+                              <Badge key={i} variant="secondary" className="text-xs">
+                                {entity}
+                              </Badge>
+                            ))}
+                            {conversation.entities.length > 5 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{conversation.entities.length - 5} more
+                              </Badge>
+                            )}
+                          </div>
                         )}
                       </div>
                       <div className="flex gap-2 items-start">
-                        <Badge variant="outline" className={getSourceColor(item.source)}>
-                          {item.source.replace("_", " ")}
+                        <Badge variant="outline" className={getSourceColor(conversation.agent || "unknown")}>
+                          {conversation.agent || "Unknown"}
                         </Badge>
-                        {item.itemType && (
-                          <Badge variant="outline" className="bg-muted">
-                            {item.itemType}
-                          </Badge>
-                        )}
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between pt-2">
                       <div className="text-xs text-muted-foreground">
-                        {item.lastModified && (
-                          <span>Modified: {new Date(item.lastModified).toLocaleDateString()}</span>
+                        {conversation.date && (
+                          <span>Date: {new Date(conversation.date).toLocaleDateString()}</span>
                         )}
                       </div>
-                      {item.url && (
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          onClick={() => window.open(item.url!, "_blank")}
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Open
-                        </Button>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -167,12 +173,12 @@ export default function KnowledgeLake() {
               <div className="flex flex-col items-center justify-center py-12">
                 <Database className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
-                  {activeSearch ? "No results found" : "No knowledge items yet"}
+                  {activeSearch ? "No results found" : "No conversations yet"}
                 </h3>
                 <p className="text-muted-foreground text-center max-w-md">
-                  {activeSearch 
-                    ? "Try adjusting your search terms or clearing the search to see all items."
-                    : "Your knowledge base items will appear here once your platforms are synced."}
+                  {activeSearch
+                    ? "Try adjusting your search terms or clearing the search to see all conversations."
+                    : "Your ingested conversations will appear here once they are processed by the Knowledge Lake API."}
                 </p>
               </div>
             )}
