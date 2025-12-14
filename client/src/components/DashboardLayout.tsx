@@ -21,17 +21,25 @@ import {
 } from "@/components/ui/sidebar";
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Database, TrendingUp, Workflow, BookOpen, MessageSquare, ClipboardList } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Database, TrendingUp, Workflow, BookOpen, MessageSquare, ClipboardList, Sparkles } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-const menuItems = [
+type MenuItem = {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  path: string;
+  external?: boolean;
+};
+
+const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: ClipboardList, label: "ACRRM Pipeline", path: "/acrrm" },
   { icon: Database, label: "Platforms", path: "/platforms" },
   { icon: TrendingUp, label: "LLM Metrics", path: "/llm-metrics" },
+  { icon: Sparkles, label: "VibeSDK Chat", path: "https://vibe.mtmot.com", external: true },
   { icon: Workflow, label: "Workflows", path: "/workflows" },
   { icon: BookOpen, label: "Knowledge Lake", path: "/knowledge" },
   { icon: MessageSquare, label: "AI Assistant", path: "/chat" },
@@ -220,7 +228,13 @@ function DashboardLayoutContent({
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => setLocation(item.path)}
+                      onClick={() => {
+                        if (item.external) {
+                          window.open(item.path, '_blank');
+                        } else {
+                          setLocation(item.path);
+                        }
+                      }}
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal`}
                     >
