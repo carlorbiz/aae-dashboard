@@ -1,6 +1,6 @@
 import { eq, and, desc, sql } from "drizzle-orm";
-import { drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import {
   InsertUser,
   users,
@@ -22,15 +22,19 @@ import {
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
-let _db: ReturnType<typeof drizzleSqlite> | null = null;
+let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: Pool | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      // Use better-sqlite3 for local D1 SQLite database
-      const sqlite = new Database(process.env.DATABASE_URL);
-      _db = drizzleSqlite(sqlite);
-      console.log("[Database] Connected to SQLite database at:", process.env.DATABASE_URL);
+      // Use pg for PostgreSQL connection
+      _pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+      });
+      _db = drizzle(_pool);
+      console.log("[Database] Connected to PostgreSQL database");
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -91,7 +95,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
+    await db.insert(users).values(values).onConflictDoUpdate({
+      target: users.openId,
       set: updateSet,
     });
   } catch (error) {
@@ -124,7 +129,8 @@ export async function upsertPlatformIntegration(integration: InsertPlatformInteg
   const db = await getDb();
   if (!db) return;
   
-  await db.insert(platformIntegrations).values(integration).onDuplicateKeyUpdate({
+  await db.insert(platformIntegrations).values(integration).onConflictDoUpdate({
+    target: [platformIntegrations.userId, platformIntegrations.platform],
     set: {
       status: integration.status,
       lastSynced: integration.lastSynced,
@@ -194,7 +200,8 @@ export async function upsertWorkflow(workflow: InsertWorkflow): Promise<void> {
   const db = await getDb();
   if (!db) return;
   
-  await db.insert(workflows).values(workflow).onDuplicateKeyUpdate({
+  await db.insert(workflows).values(workflow).onConflictDoUpdate({
+    target: [workflows.userId, workflows.externalId],
     set: {
       name: workflow.name,
       description: workflow.description,
@@ -259,7 +266,8 @@ export async function upsertKnowledgeItem(item: InsertKnowledgeItem): Promise<vo
   const db = await getDb();
   if (!db) return;
   
-  await db.insert(knowledgeItems).values(item).onDuplicateKeyUpdate({
+  await db.insert(knowledgeItems).values(item).onConflictDoUpdate({
+    target: [knowledgeItems.userId, knowledgeItems.externalId],
     set: {
       title: item.title,
       contentPreview: item.contentPreview,
