@@ -618,10 +618,10 @@ export const knowledgeRouter = router({
             name: entity.normalized,
             description: entity.description,
             semanticState: input.autoPromote ? 'DRAFT' : 'RAW',
-            properties: JSON.stringify({
+            properties: {
               confidence: entity.confidence,
               sourceContext: entity.sourceContext,
-            }),
+            },
             sourceType: 'conversation',
             sourceId: input.filePath,
             sourceUrl: input.filePath,
@@ -678,10 +678,10 @@ export const knowledgeRouter = router({
                 relationshipType: rel.relationshipType,
                 weight: rel.weight,
                 semanticState: input.autoPromote ? 'DRAFT' : 'RAW',
-                properties: JSON.stringify({
+                properties: {
                   confidence: rel.confidence,
                   sourceContext: rel.sourceContext,
-                }),
+                },
                 createdAt: now,
                 updatedAt: now,
               });
