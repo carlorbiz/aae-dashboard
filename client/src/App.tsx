@@ -12,6 +12,8 @@ import Workflows from "./pages/Workflows";
 import KnowledgeLake from "./pages/KnowledgeLake";
 import AIChat from "./pages/AIChat";
 import ACRRMPipeline from "./pages/ACRRMPipeline";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 
 function Router() {
   return (
@@ -24,6 +26,8 @@ function Router() {
       <Route path={"/knowledge"} component={KnowledgeLake} />
       <Route path={"/chat"} component={AIChat} />
       <Route path={"/acrrm"} component={ACRRMPipeline} />
+      <Route path={"/projects/:id"} component={ProjectDetail} />
+      <Route path={"/projects"} component={Projects} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
