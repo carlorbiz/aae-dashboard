@@ -1,4 +1,4 @@
-import { pgTable, pgEnum, serial, text, timestamp, varchar, boolean, json, integer } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, serial, text, timestamp, varchar, boolean, jsonb, integer } from "drizzle-orm/pg-core";
 
 // Define PostgreSQL enums
 export const userRoleEnum = pgEnum("role", ["user", "admin"]);
@@ -38,7 +38,7 @@ export const platformIntegrations = pgTable("platform_integrations", {
   platform: platformEnum("platform").notNull(),
   status: integrationStatusEnum("status").default("disconnected").notNull(),
   lastSynced: timestamp("lastSynced"),
-  metadata: json("metadata"), // Store platform-specific config
+  metadata: jsonb("metadata"), // Store platform-specific config
   errorMessage: text("errorMessage"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
@@ -84,7 +84,7 @@ export const workflows = pgTable("workflows", {
   runCount: integer("runCount").default(0).notNull(),
   successCount: integer("successCount").default(0).notNull(),
   errorCount: integer("errorCount").default(0).notNull(),
-  metadata: json("metadata"), // Store workflow-specific data
+  metadata: jsonb("metadata"), // Store workflow-specific data
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -105,7 +105,7 @@ export const knowledgeItems = pgTable("knowledge_items", {
   url: varchar("url", { length: 1000 }),
   itemType: varchar("itemType", { length: 100 }), // e.g., "document", "page", "repository"
   lastModified: timestamp("lastModified"),
-  metadata: json("metadata"), // Store source-specific data
+  metadata: jsonb("metadata"), // Store source-specific data
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -124,7 +124,7 @@ export const notifications = pgTable("notifications", {
   type: notificationTypeEnum("type").default("info").notNull(),
   isRead: boolean("isRead").default(false).notNull(),
   source: varchar("source", { length: 100 }), // e.g., "slack", "github", "workflow"
-  metadata: json("metadata"),
+  metadata: jsonb("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -141,7 +141,7 @@ export const entities = pgTable("entities", {
   name: varchar("name", { length: 500 }).notNull(),
   description: text("description"),
   semanticState: semanticStateEnum("semanticState").default("RAW").notNull(),
-  properties: json("properties"), // Entity-specific metadata
+  properties: jsonb("properties"), // Entity-specific metadata
   sourceType: varchar("sourceType", { length: 100 }), // e.g., "transcript", "notion_page", "github_issue"
   sourceId: varchar("sourceId", { length: 255 }), // External ID in source system
   sourceUrl: varchar("sourceUrl", { length: 1000 }),
@@ -162,7 +162,7 @@ export const relationships = pgTable("relationships", {
   relationshipType: varchar("relationshipType", { length: 100 }).notNull(), // e.g., "mentions", "depends_on", "created_by", "related_to"
   weight: integer("weight").default(1).notNull(), // Relationship strength (1-10)
   semanticState: semanticStateEnum("semanticState").default("RAW").notNull(),
-  properties: json("properties"), // Relationship-specific metadata
+  properties: jsonb("properties"), // Relationship-specific metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -181,7 +181,7 @@ export const semanticHistory = pgTable("semantic_history", {
   newState: semanticStateEnum("newState").notNull(),
   changedBy: integer("changedBy").notNull(), // userId who made the change
   reason: text("reason"), // Why the transition occurred
-  metadata: json("metadata"), // Additional context
+  metadata: jsonb("metadata"), // Additional context
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
