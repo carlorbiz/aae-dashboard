@@ -1,0 +1,608 @@
+{
+  "name": "AAE Agent Router",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aae-chat",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "AAE Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "aae-chat-webhook",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "AAE Webhook Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userId",
+              "value": "={{ $json.userId }}"
+            },
+            {
+              "name": "userMessage",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "knowledgeLakeUrl",
+              "value": "={{ $env.KNOWLEDGE_LAKE_URL }}"
+            },
+            {
+              "name": "dashboardCallbackUrl",
+              "value": "={{ $env.AAE_DASHBOARD_URL }}/api/chat/callback"
+            }
+          ],
+          "array": [
+            {
+              "name": "conversationHistory",
+              "value": "={{ $json.conversationHistory || [] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-variables",
+      "name": "Initialize Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node['Initialize Variables'].json.knowledgeLakeUrl }}/api/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $node['Initialize Variables'].json.userMessage }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $node['Initialize Variables'].json.userId }}"
+            },
+            {
+              "name": "limit",
+              "value": 5
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "query-knowledge-lake",
+      "name": "Query Knowledge Lake",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [650, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Analyze query to determine optimal agent\nconst message = $input.item.json.userMessage.toLowerCase();\nconst knowledgeContext = $input.item.json.results || [];\n\n// Query patterns\nconst patterns = {\n  technical: /\\b(code|debug|api|database|deploy|error|fix|build|test|git|docker|railway|typescript|javascript|python|sql|postgres)\\b/gi,\n  business: /\\b(strategy|roi|budget|revenue|costs|clients|growth|market|competition|sales|pricing|profit)\\b/gi,\n  research: /\\b(what is|how does|explain|research|latest|trends|compare|versus|study|analyze)\\b/gi,\n  consulting: /\\b(should i|recommend|advice|best practice|approach|decision|planning|optimize|improve)\\b/gi,\n  multiAgent: /\\b(comprehensive|full analysis|multiple perspectives|all aspects|thorough|detailed review)\\b/gi\n};\n\n// Count matches\nconst scores = {\n  technical: (message.match(patterns.technical) || []).length,\n  business: (message.match(patterns.business) || []).length,\n  research: (message.match(patterns.research) || []).length,\n  consulting: (message.match(patterns.consulting) || []).length,\n  multiAgent: (message.match(patterns.multiAgent) || []).length\n};\n\n// Determine complexity\nconst wordCount = message.split(/\\s+/).length;\nconst hasContext = knowledgeContext.length > 0;\nconst complexity = wordCount > 50 || scores.multiAgent > 0 ? 'complex' : 'simple';\n\n// Select primary agent\nlet selectedAgent = 'Fred'; // Default\nlet agentReason = 'General technical queries';\n\nif (scores.multiAgent > 0 || complexity === 'complex') {\n  selectedAgent = 'Multi-Agent';\n  agentReason = 'Complex query requiring multiple perspectives';\n} else if (scores.technical >= 2) {\n  selectedAgent = 'Fred';\n  agentReason = 'Technical implementation focus';\n} else if (scores.consulting >= 2) {\n  selectedAgent = 'Claude';\n  agentReason = 'Strategic planning and architecture';\n} else if (scores.business >= 2) {\n  selectedAgent = 'Colin';\n  agentReason = 'Business strategy and ROI analysis';\n} else if (scores.research >= 2) {\n  selectedAgent = 'Penny';\n  agentReason = 'Research and latest information needed';\n}\n\nreturn {\n  selectedAgent,\n  agentReason,\n  complexity,\n  scores,\n  requiresMultiAgent: selectedAgent === 'Multi-Agent',\n  contextAvailable: hasContext,\n  relevantKnowledge: knowledgeContext\n};"
+      },
+      "id": "analyze-query",
+      "name": "Determine Agent & Complexity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "operation": "equal",
+              "value1": "={{ $json.selectedAgent }}",
+              "value2": "Fred"
+            },
+            {
+              "operation": "equal",
+              "value1": "={{ $json.selectedAgent }}",
+              "value2": "Claude"
+            },
+            {
+              "operation": "equal",
+              "value1": "={{ $json.selectedAgent }}",
+              "value2": "Colin"
+            },
+            {
+              "operation": "equal",
+              "value1": "={{ $json.selectedAgent }}",
+              "value2": "Penny"
+            },
+            {
+              "operation": "equal",
+              "value1": "={{ $json.selectedAgent }}",
+              "value2": "Multi-Agent"
+            }
+          ]
+        }
+      },
+      "id": "route-to-agent",
+      "name": "Route to Agent",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://forge.manus.im/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gemini-2.5-flash"
+            },
+            {
+              "name": "max_tokens",
+              "value": 4096
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fred-gemini",
+      "name": "Fred - Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1250, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Manus Forge API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-sonnet-4-5-20250929"
+            },
+            {
+              "name": "max_tokens",
+              "value": 8192
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "claude-anthropic",
+      "name": "Claude - Anthropic",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1250, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "3",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4-turbo-preview"
+            },
+            {
+              "name": "max_tokens",
+              "value": 4096
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "colin-openai",
+      "name": "Colin - OpenAI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1250, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "4",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "llama-3.1-sonar-large-128k-online"
+            },
+            {
+              "name": "max_tokens",
+              "value": 4096
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "penny-perplexity",
+      "name": "Penny - Perplexity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1250, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5",
+          "name": "Perplexity API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Multi-agent orchestration\nconst userMessage = $input.item.json.userMessage;\n\nreturn {\n  multiAgentMode: true,\n  message: 'Complex query detected - consulting AAE Council. This will require sequential agent consultation.',\n  agent: 'Multi-Agent',\n  agentType: 'AAE Council',\n  note: 'For MVP, route to Claude for comprehensive analysis. Phase 2 will implement true multi-agent orchestration.'\n};"
+      },
+      "id": "multi-agent-orchestrator",
+      "name": "Multi-Agent Orchestrator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 500],
+      "notes": "Phase 2: Implement sequential agent consultation"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract entities from AI response\nconst agentResponse = $input.item.json.message || $input.item.json.content?.[0]?.text || $input.item.json.choices?.[0]?.message?.content || '';\nconst userMessage = $node['Initialize Variables'].json.userMessage;\nconst agent = $input.item.json.agent || 'Unknown';\n\n// Entity extraction patterns\nconst patterns = {\n  Agents: /\\b(Claude|Fred|Colin|Penny|Gemini|GPT-4|Perplexity|Manus|n8n|Zapier)\\b/gi,\n  Technology: /\\b(Railway|Cloudflare|PostgreSQL|mem0|tRPC|React|Node\\.js|Docker|Git|API|database|webhook|Notion|GitHub)\\b/gi,\n  ExecutiveAI: /\\b(AI strategy|AI budget|AI governance|automation strategy|LLM optimization|AI ROI)\\b/gi,\n  Consulting: /\\b(workflow design|system architecture|implementation plan|best practices|optimization|strategy)\\b/gi\n};\n\nconst entities = [];\nconst seen = new Set();\nconst fullText = `${userMessage}\\n\\n${agentResponse}`;\n\nfor (const [entityType, pattern] of Object.entries(patterns)) {\n  const matches = fullText.match(pattern) || [];\n  \n  matches.forEach(match => {\n    const normalized = match.trim().toLowerCase();\n    if (!seen.has(normalized)) {\n      seen.add(normalized);\n      const matchIndex = fullText.indexOf(match);\n      entities.push({\n        name: match.trim(),\n        entityType,\n        confidence: 0.85,\n        description: `Discussed in ${agent} conversation`,\n        sourceContext: fullText.substring(Math.max(0, matchIndex - 50), Math.min(fullText.length, matchIndex + 50))\n      });\n    }\n  });\n}\n\n// Infer relationships\nconst relationships = [];\nif (entities.length >= 2) {\n  const agentEntities = entities.filter(e => e.entityType === 'Agents');\n  const techEntities = entities.filter(e => e.entityType === 'Technology');\n  \n  agentEntities.forEach(agentEntity => {\n    techEntities.forEach(techEntity => {\n      relationships.push({\n        from: agentEntity.name,\n        to: techEntity.name,\n        relationshipType: 'discusses',\n        weight: 5,\n        confidence: 0.80\n      });\n    });\n  });\n}\n\nreturn {\n  entities,\n  relationships,\n  extractedCount: entities.length,\n  relationshipCount: relationships.length,\n  agent: $input.item.json.agent,\n  message: agentResponse\n};"
+      },
+      "id": "extract-entities",
+      "name": "Extract Entities",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node['Initialize Variables'].json.knowledgeLakeUrl }}/api/conversations/ingest",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "userId",
+              "value": "={{ $node['Initialize Variables'].json.userId }}"
+            },
+            {
+              "name": "agent",
+              "value": "={{ $json.agent }}"
+            },
+            {
+              "name": "date",
+              "value": "={{ new Date().toISOString().split('T')[0] }}"
+            },
+            {
+              "name": "topic",
+              "value": "=Dashboard Chat: {{ $node['Initialize Variables'].json.userMessage.substring(0, 100) }}"
+            },
+            {
+              "name": "content",
+              "value": "=User: {{ $node['Initialize Variables'].json.userMessage }}\\n\\n{{ $json.agent }}: {{ $json.message }}"
+            }
+          ]
+        },
+        "options": {
+          "retry": {
+            "maxRetries": 3,
+            "waitBetweenTries": 1000
+          }
+        }
+      },
+      "id": "ingest-to-knowledge-lake",
+      "name": "Ingest to Knowledge Lake",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1650, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "values": {
+          "boolean": [
+            {
+              "name": "success",
+              "value": true
+            },
+            {
+              "name": "ingested",
+              "value": "={{ $node['Ingest to Knowledge Lake'].json.success || false }}"
+            }
+          ],
+          "string": [
+            {
+              "name": "agent",
+              "value": "={{ $node['Extract Entities'].json.agent }}"
+            },
+            {
+              "name": "agentReason",
+              "value": "={{ $node['Determine Agent & Complexity'].json.agentReason }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $node['Extract Entities'].json.message }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $node['Initialize Variables'].json.timestamp }}"
+            }
+          ],
+          "number": [
+            {
+              "name": "entitiesCount",
+              "value": "={{ $node['Extract Entities'].json.extractedCount }}"
+            },
+            {
+              "name": "conversationId",
+              "value": "={{ $node['Ingest to Knowledge Lake'].json.conversation?.id || 0 }}"
+            }
+          ],
+          "array": [
+            {
+              "name": "entities",
+              "value": "={{ $node['Extract Entities'].json.entities }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2050, 300]
+    }
+  ],
+  "connections": {
+    "AAE Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Initialize Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Variables": {
+      "main": [
+        [
+          {
+            "node": "Query Knowledge Lake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Knowledge Lake": {
+      "main": [
+        [
+          {
+            "node": "Determine Agent & Complexity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine Agent & Complexity": {
+      "main": [
+        [
+          {
+            "node": "Route to Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route to Agent": {
+      "main": [
+        [
+          {
+            "node": "Fred - Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Claude - Anthropic",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Colin - OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Penny - Perplexity",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Multi-Agent Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fred - Gemini": {
+      "main": [
+        [
+          {
+            "node": "Extract Entities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude - Anthropic": {
+      "main": [
+        [
+          {
+            "node": "Extract Entities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Colin - OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Extract Entities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Penny - Perplexity": {
+      "main": [
+        [
+          {
+            "node": "Extract Entities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Multi-Agent Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Extract Entities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Entities": {
+      "main": [
+        [
+          {
+            "node": "Ingest to Knowledge Lake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ingest to Knowledge Lake": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-12-24T00:00:00.000Z",
+      "updatedAt": "2025-12-24T00:00:00.000Z",
+      "id": "1",
+      "name": "AAE"
+    },
+    {
+      "createdAt": "2025-12-24T00:00:00.000Z",
+      "updatedAt": "2025-12-24T00:00:00.000Z",
+      "id": "2",
+      "name": "AI Agents"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-24T00:00:00.000Z",
+  "versionId": "1"
+}
