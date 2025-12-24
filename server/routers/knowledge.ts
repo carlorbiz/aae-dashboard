@@ -732,22 +732,18 @@ export const knowledgeRouter = router({
       const knowledgeLakeUrl = process.env.KNOWLEDGE_LAKE_URL || 'https://knowledge-lake-api-production.up.railway.app';
 
       try {
-        const params = new URLSearchParams({
-          userId: userId.toString(),
-          limit: input.limit.toString(),
+        // Use POST /api/query endpoint (Knowledge Lake API 2.1.0)
+        const response = await axios.post(`${knowledgeLakeUrl}/api/query`, {
+          userId: userId,
+          query: input.query || '',
+          limit: input.limit,
         });
-
-        if (input.query) params.append('q', input.query);
-        if (input.agent) params.append('agent', input.agent);
-        if (input.entityType) params.append('entityType', input.entityType);
-
-        const response = await axios.get(`${knowledgeLakeUrl}/api/conversations?${params.toString()}`);
 
         return {
           success: true,
-          conversations: response.data.conversations || [],
-          total: response.data.total || 0,
-          filters: response.data.filters || {},
+          conversations: response.data.results || [],
+          total: response.data.results?.length || 0,
+          filters: {},
         };
       } catch (error: any) {
         console.error('[Knowledge Lake] Error fetching conversations:', error.message);
