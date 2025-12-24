@@ -87,6 +87,86 @@ Need podcast from documents? → NotebookLM
 Need workflow optimization? → Pete (Qolaba)
 ```
 
+---
+
+## 🎭 FredCast Personas & Shortcut Codes
+
+**Source:** `aae-council/AAE_Shortcut_Schema.json` - Task-specific persona playbooks
+
+### Concept
+- **Agent** = Which LLM endpoint runs the task (Fred, Fredo, Claude, Gemini, etc.)
+- **Persona** = Which *FredCast playbook* shapes the work (strat, roadmap, research, course, creator, etc.)
+- **Shortcut Code** = What type of output you want (SUMM, BOARD, BID, PLAN, etc.)
+
+### Command Grammar
+```text
+cmd:<CODE> [agent:<agent-alias>] [persona:<persona-alias>] [other args]
+```
+
+**Example:** "Maya — update all 'blog posts' to 'essays'" translates to:
+```text
+cmd:PLAN agent:fred persona:roadmap task:"rename content type" scope:"project"
+```
+
+### FredCast Personas & Shortcut Codes Reference
+
+| Code | Purpose | Default Agent | Default Persona | Output Template |
+|------|---------|---------------|-----------------|-----------------|
+| **SUMM** | Meeting summary (exec-ready) | Fred | fred | Decisions, Actions (Who/When), Risks, Next steps |
+| **BOARD** | Board paper | Fredo | fredo | Purpose, Background, Analysis, Options, Recommendation, Impacts |
+| **BID** | Consulting bid/proposal | Claude | strat | Exec Summary, Objectives, Methodology, Deliverables, Timeline, Budget |
+| **PLAN** | Project plan | Fred | roadmap (Maya) | Scope, Milestones, RACI, Dependencies, Risks, Comms cadence |
+| **RESEARCH** | Research synthesis | Gemini | research | Findings, Evidence table (Source/Claim/Confidence), Gaps, Implications |
+| **COURSE** | Course module | Fredo | course | Outcomes, Outline, Activities, Assessment, Resources |
+| **POD** | Blog → Podcast episode | Fred | creator | Hook, Intro, Segments with beats, CTA, Outro |
+| **POD_POST** | Podcast post-production | Fred | edit | Timestamps, Show notes, Links, Keywords/SEO, Social captions |
+| **BLOG_SERIES** | Blog series plan | Fred | creator | Post titles, Angles, CTA plan, Cadence |
+| **MEMOIR** | Memoir interview prompts | Fredo | int | Theme, Warm-up, Core probes, Reflection prompts, Closing |
+| **STAKE** | Stakeholder report | Claude | strat | Themes, Representative quotes, Concerns, Suggestions, Implications |
+| **BUDGET** | Grant/bid budget | Fred | fred | Budget table, notes, assumptions, cost categories |
+| **ACTION** | Action list from thread | Fred | fred | Who/What/When + optional Notion task creation |
+| **ROUTE** | Route to another agent | Manus | sys | Routing instruction for Manus to dispatch work |
+| **LOG** | Log event to Knowledge Lake | VibeSDK/OpenMemory | - | Event description, tags, timestamp |
+
+### Persona-Specific Capabilities
+
+| Persona Alias | Full Name | Agent | Specialty | Key Outputs |
+|---------------|-----------|-------|-----------|-------------|
+| **fred** | Fred (default) | Fred | Voice intake, general tasks | Summaries, actions, budgets |
+| **fredo** | Fredo (default) | Fredo | Business operations | Board papers, course modules, memoirs |
+| **strat** | Strategic | Claude | Strategy, bids, stakeholders | Proposals, strategic reports, stakeholder analysis |
+| **roadmap** | Maya | Fred | Project planning | Project plans, scoping, RACI matrices |
+| **research** | Research | Gemini | Evidence synthesis | Research briefs, evidence tables, gap analysis |
+| **course** | Course Creator | Fredo | Educational design | Course modules, learning outcomes, assessments |
+| **creator** | Content Creator | Fred | Podcasts, blog series | Podcast scripts, blog arcs, social content |
+| **edit** | Editor | Fred | Post-production | Show notes, timestamps, SEO optimization |
+| **int** | Interviewer | Fredo | Memoir, discovery | Interview guides, question sets, reflection prompts |
+| **sys** | System Router | Manus | Task delegation | Routing instructions, agent coordination |
+
+### Usage in AAE Ecosystem
+
+**Voice Command Example:**
+> "Maya — create project plan for MTMOT Mastermind Hub launch"
+
+**Translated to:**
+```text
+cmd:PLAN agent:fred persona:roadmap task:"MTMOT Mastermind Hub launch" notion:on
+```
+
+**Slack/Automation Example:**
+```text
+cmd:RESEARCH agent:gemini persona:research topic:"AHPRA compliance nursing education" sources:3
+```
+
+**n8n Workflow Integration:**
+1. Parse command code (SUMM, BOARD, BID, etc.)
+2. Look up default agent and persona from schema
+3. Apply persona-specific system prompt
+4. Route to appropriate agent endpoint
+5. Return output in canonical template format
+
+---
+
 ## 📋 Agent Routing Logic (for n8n Workflow)
 
 ### Query Type → Recommended Agent
