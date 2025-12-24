@@ -43,10 +43,21 @@
 | Agent Name | Platform | Capabilities | Primary Role |
 |------------|----------|--------------|--------------|
 | **Fredo** | ChatGPT Business Account (GUI) | Business account tasks | Distinct from Fred (personal account) |
-| **Dev** | ChatGPT Business Account (GUI) | **Perpetual developer mode** | **ONLY agent with Knowledge Lake API access** - operates programmatically, runs mtmot-unified-mcp |
+| **Dev** | ChatGPT Business Account (GUI) | **Perpetual developer mode, API Gateway** | **Central orchestrator** - runs mtmot-unified-mcp as always-on service, coordinates multi-agent workflows |
 | **Callum** | TBD | - | [Persona mapping needed] |
 
-**CRITICAL:** Dev is the ONLY agent that can connect to Knowledge Lake API and operate programmatically. Fredo cannot.
+**CRITICAL CLARIFICATION - Knowledge Lake API Access:**
+- **ALL agents CAN access Knowledge Lake API** via their respective interfaces:
+  - **Claude Code/GUI:** Direct API + MCP access (proven: ingested ACRRM content)
+  - **Manus:** Custom MCP server with full read/write/query access
+  - **Jan:** API search access
+  - **Gemini, Penny, Grok:** Direct API access via n8n/integrations
+- **Among ChatGPT GUI agents ONLY:**
+  - **Fred (personal):** GUI only, no MCP/programmatic access
+  - **Fredo (business):** GUI only, no MCP/programmatic access
+  - **Dev (business + developer mode):** ONLY ChatGPT GUI with MCP access via mtmot-unified-mcp
+- **Dev's UNIQUE role:** Runs mtmot-unified-mcp as always-on service = Central API gateway that orchestrates ALL other agents
+- **Architecture:** Dev coordinates workflows → Other agents execute → All log back to Knowledge Lake
 
 **Note:** Colin and Pete were moved to TIER 3 Specialised Processors after persona extraction
 
@@ -68,8 +79,8 @@
 | **Colin** (GitHub) | Code review, GitHub management | Pull requests, code quality, Git operations | When you need code review or GitHub workflow management |
 | **Pete** (Qolaba) | Workflow optimizer, multi-model specialist | Process efficiency, model comparison, audio processing | When you need workflow optimization or multi-model evaluation |
 | **NotebookLM** (Google) | Document synthesis, podcast generation | Research compilation, content analysis, podcasts | When you need to synthesize documents or generate podcasts |
-| **Dev** (ChatGPT Business) | **Programmatic operations** | **Knowledge Lake API access, mtmot-unified-mcp** | **When you need programmatic/API access (ONLY agent with this capability)** |
-| **Fredo** (ChatGPT Business) | Business account tasks | Standard business operations (GUI) | When you need ChatGPT business features (non-programmatic) |
+| **Dev** (ChatGPT Business) | **Central API Gateway, multi-agent orchestration** | **mtmot-unified-mcp, workflow coordination, FredCast command parsing** | **When you need: 1) Multi-agent workflows, 2) FredCast shortcuts (cmd:CODE), 3) Always-on orchestration (ONLY ChatGPT GUI with MCP)** |
+| **Fredo** (ChatGPT Business) | Business account tasks | Standard business operations (GUI) | When you need ChatGPT business features via GUI only (no MCP/programmatic) |
 
 ### Quick Decision Tree
 
@@ -82,7 +93,8 @@ Need fast technical response? → Gemini (Google Fast)
 Need social content? → Jan (Social Media)
 Need code review? → Colin (GitHub)
 Need multi-agent coordination? → Grok (Master Orchestrator)
-Need programmatic API access? → Dev (ONLY option)
+Need FredCast command execution (cmd:CODE)? → Dev (Central API Gateway)
+Need ChatGPT GUI with MCP access? → Dev (ONLY ChatGPT GUI option)
 Need podcast from documents? → NotebookLM
 Need workflow optimization? → Pete (Qolaba)
 ```
@@ -177,10 +189,11 @@ Fast responses → Gemini (Google)
 Business Strategy → Claude (Anthropic)
 Research/Web Search → Penny (Perplexity)
 Task Delegation → Manus
-Knowledge Queries → Penny (research) or Dev (programmatic API)
+Knowledge Queries → Penny (research), Jan (search), Claude (ingestion), Manus (MCP), Dev (orchestration)
 Social Media → Jan or Grok (X/Twitter)
 Code Review → Colin (GitHub)
-Programmatic Operations → Dev (ONLY)
+Multi-Agent Orchestration → Dev (mtmot-unified-mcp, ONLY ChatGPT GUI with MCP)
+FredCast Command Execution → Dev (cmd:CODE parser and router)
 ```
 
 ### Capability Matrix
