@@ -694,13 +694,52 @@ export const knowledgeRouter = router({
           }
         }
 
+        // 8. Dual-write to Knowledge Lake API
+        const knowledgeLakeUrl = process.env.KNOWLEDGE_LAKE_URL || 'https://knowledge-lake-api-production.up.railway.app';
+        let knowledgeLakeIngested = false;
+
+        try {
+          await axios.post(`${knowledgeLakeUrl}/api/conversations`, {
+            userId,
+            topic: parsed.metadata?.title || `Conversation from ${input.filePath}`,
+            content: parsed.fullText,
+            conversationDate: parsed.metadata?.date || new Date().toISOString().split('T')[0],
+            entities: validatedEntities.map(e => ({
+              name: e.normalized,
+              entityType: e.entityType,
+              confidence: e.confidence,
+              description: e.description,
+              sourceContext: e.sourceContext,
+            })),
+            relationships: inferredRelationships.map(r => ({
+              from: r.fromEntityName,
+              to: r.toEntityName,
+              relationshipType: r.relationshipType,
+              weight: r.weight,
+              confidence: r.confidence,
+            })),
+            metadata: {
+              agent: 'AAE Dashboard',
+              source: 'manual_ingestion',
+              filePath: input.filePath,
+              wordCount: parsed.fullText.split(/\s+/).length,
+            },
+          });
+          knowledgeLakeIngested = true;
+          console.log('[Knowledge Lake] Successfully ingested conversation to Knowledge Lake');
+        } catch (knowledgeLakeError: any) {
+          console.warn('[Knowledge Lake] Dual-write to Knowledge Lake failed:', knowledgeLakeError.message);
+          // Continue anyway - local write succeeded
+        }
+
         return {
           success: true,
           entitiesCreated: insertedEntities.length,
           entitiesSkipped: validatedEntities.filter((e) => e.existingEntity)
             .length,
           relationshipsCreated: insertedRelationships.length,
-          message: `Ingested ${insertedEntities.length} new entities and ${insertedRelationships.length} relationships from conversation`,
+          knowledgeLakeIngested,
+          message: `Ingested ${insertedEntities.length} new entities and ${insertedRelationships.length} relationships from conversation${knowledgeLakeIngested ? ' (synced to Knowledge Lake)' : ''}`,
         };
       } catch (error: any) {
         return {
