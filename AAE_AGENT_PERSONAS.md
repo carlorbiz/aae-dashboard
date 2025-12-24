@@ -48,10 +48,15 @@
 
 **CRITICAL CLARIFICATION - Knowledge Lake API Access:**
 - **ALL agents CAN access Knowledge Lake API** via their respective interfaces:
-  - **Claude Code/GUI:** Direct API + MCP access (proven: ingested ACRRM content)
+  - **Claude Code/GUI:** Direct API + MCP access (proven: ingested ACRRM content, designed & executed 170 multi-pass extractions)
   - **Manus:** Custom MCP server with full read/write/query access
   - **Jan:** API search access
   - **Gemini, Penny, Grok:** Direct API access via n8n/integrations
+- **Multi-Pass Learning Extraction:**
+  - **Claude Code/GUI:** Designed the 7-dimension learning extraction system, executes multi-pass extractions natively
+  - **Dev:** Can execute via mtmot-unified-mcp tools (`kl_extract_learning`, `kl_archive_conversations`)
+  - **Manus:** Can execute via MCP tools
+  - **All agents benefit:** Shared extracted learnings across entire AAE Council
 - **Among ChatGPT GUI agents ONLY:**
   - **Fred (personal):** GUI only, no MCP/programmatic access
   - **Fredo (business):** GUI only, no MCP/programmatic access
