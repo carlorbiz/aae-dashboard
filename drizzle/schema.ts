@@ -187,3 +187,121 @@ export const semanticHistory = pgTable("semantic_history", {
 
 export type SemanticHistory = typeof semanticHistory.$inferSelect;
 export type InsertSemanticHistory = typeof semanticHistory.$inferInsert;
+
+/**
+ * Projects - Commercial PWAs (apps and courses)
+ */
+export const projectTypeEnum = pgEnum("project_type", ["pwa_app", "pwa_course", "api_service", "other"]);
+export const projectStatusEnum = pgEnum("project_status", ["planning", "development", "testing", "production", "maintenance", "archived"]);
+export const healthStatusEnum = pgEnum("health_status", ["healthy", "degraded", "down", "unknown"]);
+
+export const projects = pgTable("projects", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: projectTypeEnum("type").notNull(),
+  status: projectStatusEnum("status").default("development").notNull(),
+  description: text("description"),
+
+  // URLs and endpoints
+  productionUrl: varchar("productionUrl", { length: 1000 }),
+  stagingUrl: varchar("stagingUrl", { length: 1000 }),
+  repositoryUrl: varchar("repositoryUrl", { length: 1000 }),
+
+  // Critical integrations
+  knowledgeLakeEnabled: boolean("knowledgeLakeEnabled").default(true).notNull(),
+  neraAIEnabled: boolean("neraAIEnabled").default(true).notNull(),
+
+  // Health monitoring
+  healthCheckUrl: varchar("healthCheckUrl", { length: 1000 }), // /health or /api/health endpoint
+  healthCheckInterval: integer("healthCheckInterval").default(300), // seconds (5 min default)
+  lastHealthCheck: timestamp("lastHealthCheck"),
+  currentHealthStatus: healthStatusEnum("currentHealthStatus").default("unknown").notNull(),
+
+  // Metadata
+  techStack: json("techStack"), // Array of technologies
+  platform: varchar("platform", { length: 100 }), // e.g., "Vercel", "Railway", "Cloudflare Pages"
+  launchDate: timestamp("launchDate"),
+  metadata: json("metadata"), // Flexible additional data
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = typeof projects.$inferInsert;
+
+/**
+ * Health Checks - Results of automated health monitoring
+ */
+export const checkTypeEnum = pgEnum("check_type", [
+  "uptime",                    // Basic HTTP uptime check
+  "knowledge_lake_read",       // Can read from Knowledge Lake
+  "knowledge_lake_write",      // Can write to Knowledge Lake
+  "nera_ai_availability",      // Nera/Aurelia AI responding
+  "nera_ai_quality",          // AI response quality check
+  "authentication",            // Auth flow working
+  "api_latency",              // Response time check
+  "database_connection",       // DB connectivity
+  "full_integration"          // End-to-end test
+]);
+
+export const healthChecks = pgTable("health_checks", {
+  id: serial("id").primaryKey(),
+  projectId: integer("projectId").notNull(),
+  checkType: checkTypeEnum("checkType").notNull(),
+  status: healthStatusEnum("status").notNull(),
+
+  // Test results
+  responseTime: integer("responseTime"), // milliseconds
+  statusCode: integer("statusCode"), // HTTP status code
+  errorMessage: text("errorMessage"),
+
+  // Detailed results
+  testDetails: json("testDetails"), // Store test-specific data
+
+  // Timestamps
+  checkedAt: timestamp("checkedAt").defaultNow().notNull(),
+});
+
+export type HealthCheck = typeof healthChecks.$inferSelect;
+export type InsertHealthCheck = typeof healthChecks.$inferInsert;
+
+/**
+ * Incidents - Track problems and downtime
+ */
+export const incidentSeverityEnum = pgEnum("incident_severity", ["critical", "high", "medium", "low"]);
+export const incidentStatusEnum = pgEnum("incident_status", ["open", "investigating", "identified", "resolved", "closed"]);
+
+export const incidents = pgTable("incidents", {
+  id: serial("id").primaryKey(),
+  projectId: integer("projectId").notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  severity: incidentSeverityEnum("severity").notNull(),
+  status: incidentStatusEnum("status").default("open").notNull(),
+
+  // Impact tracking
+  affectedFeatures: json("affectedFeatures"), // Array of feature names
+  impactedUsers: integer("impactedUsers"), // Estimated number
+
+  // Timeline
+  detectedAt: timestamp("detectedAt").defaultNow().notNull(),
+  acknowledgedAt: timestamp("acknowledgedAt"),
+  resolvedAt: timestamp("resolvedAt"),
+
+  // Resolution
+  rootCause: text("rootCause"),
+  resolution: text("resolution"),
+  preventionSteps: text("preventionSteps"),
+
+  // Related data
+  relatedHealthCheckId: integer("relatedHealthCheckId"),
+  metadata: json("metadata"),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Incident = typeof incidents.$inferSelect;
+export type InsertIncident = typeof incidents.$inferInsert;

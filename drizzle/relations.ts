@@ -3,13 +3,17 @@ import {
   users,
   entities,
   relationships,
-  semanticHistory
+  semanticHistory,
+  projects,
+  healthChecks,
+  incidents
 } from "./schema";
 
 // User relations
 export const usersRelations = relations(users, ({ many }) => ({
   entities: many(entities),
   semanticHistoryChanges: many(semanticHistory),
+  projects: many(projects),
 }));
 
 // Entity relations
@@ -51,5 +55,35 @@ export const semanticHistoryRelations = relations(semanticHistory, ({ one }) => 
   changedByUser: one(users, {
     fields: [semanticHistory.changedBy],
     references: [users.id],
+  }),
+}));
+
+// Project relations
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  user: one(users, {
+    fields: [projects.userId],
+    references: [users.id],
+  }),
+  healthChecks: many(healthChecks),
+  incidents: many(incidents),
+}));
+
+// Health Check relations
+export const healthChecksRelations = relations(healthChecks, ({ one }) => ({
+  project: one(projects, {
+    fields: [healthChecks.projectId],
+    references: [projects.id],
+  }),
+}));
+
+// Incident relations
+export const incidentsRelations = relations(incidents, ({ one }) => ({
+  project: one(projects, {
+    fields: [incidents.projectId],
+    references: [projects.id],
+  }),
+  relatedHealthCheck: one(healthChecks, {
+    fields: [incidents.relatedHealthCheckId],
+    references: [healthChecks.id],
   }),
 }));

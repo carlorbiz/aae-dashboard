@@ -7,12 +7,14 @@ import * as db from "./db";
 import { chatRouter } from "./routers/chat";
 import { knowledgeRouter } from "./routers/knowledge";
 import { acrmRouter } from "./routers/acrrm";
+import { projectsRouter } from "./routers/projects";
 
 export const appRouter = router({
   system: systemRouter,
   chat: chatRouter,
   knowledgeGraph: knowledgeRouter,
   acrrm: acrmRouter,
+  projects: projectsRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

@@ -1,4 +1,4 @@
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import {
@@ -18,7 +18,16 @@ import {
   KnowledgeItem,
   notifications,
   InsertNotification,
-  Notification
+  Notification,
+  projects,
+  InsertProject,
+  Project,
+  healthChecks,
+  InsertHealthCheck,
+  HealthCheck,
+  incidents,
+  InsertIncident,
+  Incident
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -361,4 +370,195 @@ export async function getUserById(id: number) {
 
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return result.length > 0 ? result[0] : undefined;
+}
+
+// ========================================
+// PROJECT MANAGEMENT FUNCTIONS
+// ========================================
+
+export async function createProject(project: InsertProject) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(projects).values(project).returning();
+  return result[0];
+}
+
+export async function getProjectsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(projects)
+    .where(eq(projects.userId, userId))
+    .orderBy(desc(projects.updatedAt));
+}
+
+export async function getProjectById(projectId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateProject(projectId: number, updates: Partial<Project>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db
+    .update(projects)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  return result[0];
+}
+
+export async function deleteProject(projectId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(projects).where(eq(projects.id, projectId));
+}
+
+// ========================================
+// HEALTH CHECK FUNCTIONS
+// ========================================
+
+export async function insertHealthCheck(check: InsertHealthCheck) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(healthChecks).values(check).returning();
+  return result[0];
+}
+
+export async function getHealthChecksByProjectId(projectId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(healthChecks)
+    .where(eq(healthChecks.projectId, projectId))
+    .orderBy(desc(healthChecks.checkedAt))
+    .limit(limit);
+}
+
+export async function getLatestHealthChecksByProject(projectId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get the latest check for each check type
+  return db
+    .select()
+    .from(healthChecks)
+    .where(eq(healthChecks.projectId, projectId))
+    .orderBy(desc(healthChecks.checkedAt))
+    .limit(10);
+}
+
+export async function getHealthChecksSince(projectId: number, since: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(healthChecks)
+    .where(
+      and(
+        eq(healthChecks.projectId, projectId),
+        gte(healthChecks.checkedAt, since)
+      )
+    )
+    .orderBy(desc(healthChecks.checkedAt));
+}
+
+// ========================================
+// INCIDENT MANAGEMENT FUNCTIONS
+// ========================================
+
+export async function createIncident(incident: InsertIncident) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(incidents).values(incident).returning();
+  return result[0];
+}
+
+export async function getIncidentsByProjectId(projectId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(incidents)
+    .where(eq(incidents.projectId, projectId))
+    .orderBy(desc(incidents.detectedAt));
+}
+
+export async function getOpenIncidents(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get all open incidents for user's projects
+  return db
+    .select({
+      incident: incidents,
+      project: projects
+    })
+    .from(incidents)
+    .leftJoin(projects, eq(incidents.projectId, projects.id))
+    .where(
+      and(
+        eq(projects.userId, userId),
+        eq(incidents.status, "open")
+      )
+    )
+    .orderBy(desc(incidents.detectedAt));
+}
+
+export async function updateIncident(incidentId: number, updates: Partial<Incident>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db
+    .update(incidents)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(incidents.id, incidentId))
+    .returning();
+
+  return result[0];
+}
+
+export async function resolveIncident(
+  incidentId: number,
+  resolution: string,
+  rootCause?: string,
+  preventionSteps?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db
+    .update(incidents)
+    .set({
+      status: "resolved",
+      resolvedAt: new Date(),
+      resolution,
+      rootCause,
+      preventionSteps,
+      updatedAt: new Date()
+    })
+    .where(eq(incidents.id, incidentId))
+    .returning();
+
+  return result[0];
 }
