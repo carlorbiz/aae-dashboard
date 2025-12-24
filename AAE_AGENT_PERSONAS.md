@@ -52,17 +52,55 @@
 
 ---
 
+## 📋 Agent Task Delegation Table (Quick Reference)
+
+**Source:** Fred Conversations #24 & #46 - "What to assign to which agent"
+
+| Agent | Primary Function | Best For | When to Delegate |
+|-------|------------------|----------|------------------|
+| **Fred** (OpenAI) | Voice intake coordinator, creative ideation | Voice notes, memoir interviews, client discovery, brainstorming | When you need conversational processing, storytelling, or creative ideation |
+| **Claude** (Anthropic) | Deep work partner, strategic planning | System architecture, technical writing, strategic frameworks | When you need strategic planning, documentation, or complex reasoning |
+| **Penny** (Perplexity) | Research queen, fact-checker | Real-time web research, industry trends, AHPRA/NMBA compliance | When you need current information, citations, or fact-checking |
+| **Gemini** (Google) | Fast technical responses, multimodal | Quick technical tasks, Google Workspace, image analysis | When you need speed, multimodal processing, or Google ecosystem integration |
+| **Jan** (Genspark) | Content creator, social media | Marketing copy, blog posts, social media content | When you need brand-consistent messaging or social content |
+| **Grok** (X.com) | Master orchestrator, strategic validator | Complex workflows, strategic validation, X/Twitter strategy | When you need cross-agent coordination or strategic decision validation |
+| **Manus** (Custom MCP) | Autonomous coder, execution engine | Build & deploy apps, GitHub commits, automation scripts | When you need autonomous execution, deployment, or full-stack development |
+| **Colin** (GitHub) | Code review, GitHub management | Pull requests, code quality, Git operations | When you need code review or GitHub workflow management |
+| **Pete** (Qolaba) | Workflow optimizer, multi-model specialist | Process efficiency, model comparison, audio processing | When you need workflow optimization or multi-model evaluation |
+| **NotebookLM** (Google) | Document synthesis, podcast generation | Research compilation, content analysis, podcasts | When you need to synthesize documents or generate podcasts |
+| **Dev** (ChatGPT Business) | **Programmatic operations** | **Knowledge Lake API access, mtmot-unified-mcp** | **When you need programmatic/API access (ONLY agent with this capability)** |
+| **Fredo** (ChatGPT Business) | Business account tasks | Standard business operations (GUI) | When you need ChatGPT business features (non-programmatic) |
+
+### Quick Decision Tree
+
+```
+Need current information? → Penny (Perplexity)
+Need to build/deploy something? → Manus (Execution Engine)
+Need strategic planning? → Claude (Strategic Planning)
+Need creative ideation? → Fred (Creative Ideation)
+Need fast technical response? → Gemini (Google Fast)
+Need social content? → Jan (Social Media)
+Need code review? → Colin (GitHub)
+Need multi-agent coordination? → Grok (Master Orchestrator)
+Need programmatic API access? → Dev (ONLY option)
+Need podcast from documents? → NotebookLM
+Need workflow optimization? → Pete (Qolaba)
+```
+
 ## 📋 Agent Routing Logic (for n8n Workflow)
 
 ### Query Type → Recommended Agent
 
 ```
-Technical/Code Tasks → Fred (OpenAI)
+Technical/Code Tasks → Gemini (fast) or Fred (complex)
 Fast responses → Gemini (Google)
 Business Strategy → Claude (Anthropic)
 Research/Web Search → Penny (Perplexity)
 Task Delegation → Manus
-Knowledge Queries → Jan
+Knowledge Queries → Penny (research) or Dev (programmatic API)
+Social Media → Jan or Grok (X/Twitter)
+Code Review → Colin (GitHub)
+Programmatic Operations → Dev (ONLY)
 ```
 
 ### Capability Matrix
