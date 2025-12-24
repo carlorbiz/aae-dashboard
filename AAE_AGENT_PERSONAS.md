@@ -40,10 +40,13 @@
 
 ### Tier 3: Context-Specific Agents
 
-| Agent Name | Platform | Alter-Ego/Notes | Primary Role |
-|------------|----------|-----------------|--------------|
-| **Fredo / Dev** | ChatGPT Business Account (GUI) | "Dev" in perpetual developer mode | Running mtmot-unified-mcp, business account development |
+| Agent Name | Platform | Capabilities | Primary Role |
+|------------|----------|--------------|--------------|
+| **Fredo** | ChatGPT Business Account (GUI) | Business account tasks | Distinct from Fred (personal account) |
+| **Dev** | ChatGPT Business Account (GUI) | **Perpetual developer mode** | **ONLY agent with Knowledge Lake API access** - operates programmatically, runs mtmot-unified-mcp |
 | **Callum** | TBD | - | [Persona mapping needed] |
+
+**CRITICAL:** Dev is the ONLY agent that can connect to Knowledge Lake API and operate programmatically. Fredo cannot.
 
 **Note:** Colin and Pete were moved to TIER 3 Specialised Processors after persona extraction
 
@@ -263,7 +266,8 @@ agents: {
 agents: {
   'Gemini': { model: 'gemini-2.5-flash', provider: 'google' },
   'Fred': { model: 'gpt-4o', provider: 'openai' },        // Personal OpenAI account
-  'Fredo': { model: 'gpt-4o', provider: 'openai', account: 'business', mode: 'developer' },  // Business account, Dev mode
+  'Fredo': { model: 'gpt-4o', provider: 'openai', account: 'business' },  // Business account (GUI only)
+  'Dev': { model: 'gpt-4o', provider: 'openai', account: 'business', mode: 'developer', api_access: true },  // ONLY agent with Knowledge Lake API access
   'Claude': { model: 'claude-sonnet-4-5', provider: 'anthropic' },
   'Penny': { model: 'sonar', provider: 'perplexity' },
   'Grok': { model: 'grok-beta', provider: 'xai' },
