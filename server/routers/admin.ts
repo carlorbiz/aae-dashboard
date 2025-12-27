@@ -171,6 +171,67 @@ export const adminRouter = router({
     }),
 
   /**
+   * Create Admin User
+   * Creates a default admin user for initial setup
+   */
+  createAdminUser: publicProcedure
+    .mutation(async () => {
+      const results: string[] = [];
+
+      try {
+        results.push('👤 Creating admin user...');
+
+        // Check if user already exists
+        const existingUser = await db.getUserByEmail('admin@aae-dashboard.local');
+
+        if (existingUser) {
+          results.push(`✅ Admin user already exists (ID: ${existingUser.id})`);
+          return {
+            success: true,
+            message: results.join('\n'),
+            userId: existingUser.id,
+          };
+        }
+
+        // Create admin user
+        await db.upsertUser({
+          openId: 'admin-local',
+          email: 'admin@aae-dashboard.local',
+          name: 'Admin User',
+          role: 'admin',
+          loginMethod: 'local',
+          lastSignedIn: new Date(),
+        });
+
+        // Fetch the created user to get the ID
+        const newUser = await db.getUserByEmail('admin@aae-dashboard.local');
+
+        if (!newUser) {
+          throw new Error('Failed to create admin user');
+        }
+
+        results.push(`✅ Admin user created (ID: ${newUser.id})`);
+        results.push(`   Email: ${newUser.email}`);
+        results.push(`   Name: ${newUser.name}`);
+        results.push(`   Role: ${newUser.role}`);
+
+        return {
+          success: true,
+          message: results.join('\n'),
+          userId: newUser.id,
+        };
+
+      } catch (error) {
+        results.push(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}`);
+        return {
+          success: false,
+          message: results.join('\n'),
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }),
+
+  /**
    * Seed Platform Integrations
    * Seeds Gamma and DocsAutomator platform integrations
    */
