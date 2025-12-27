@@ -87,7 +87,10 @@ export const adminRouter = router({
 
         // Run base migration
         results.push('📦 Running base migration...');
-        const baseMigrationPath = join(__dirname, '..', '..', 'drizzle', '0000_material_meteorite.sql');
+        // In production, files are in /app/dist/, migrations are in /app/drizzle/
+        const projectRoot = process.cwd();
+        const baseMigrationPath = join(projectRoot, 'drizzle', '0000_material_meteorite.sql');
+        results.push(`   Migration path: ${baseMigrationPath}`);
         const baseMigrationSQL = readFileSync(baseMigrationPath, 'utf-8');
 
         const statements = baseMigrationSQL
@@ -104,7 +107,7 @@ export const adminRouter = router({
 
         // Run platform enum migration
         results.push('📦 Running platform enum migration...');
-        const enumMigrationPath = join(__dirname, '..', '..', 'drizzle', '0001_dashing_liz_osborn.sql');
+        const enumMigrationPath = join(projectRoot, 'drizzle', '0001_dashing_liz_osborn.sql');
         const enumMigrationSQL = readFileSync(enumMigrationPath, 'utf-8');
 
         const enumStatements = enumMigrationSQL
