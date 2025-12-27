@@ -89,8 +89,8 @@ async function runMigration() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  runMigration();
-}
-
-export { runMigration };
+// Auto-run when executed directly
+runMigration().catch((error) => {
+  console.error('Fatal error:', error);
+  process.exit(1);
+});
