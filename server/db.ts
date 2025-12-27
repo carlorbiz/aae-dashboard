@@ -43,6 +43,12 @@ export async function getDb() {
   return _db;
 }
 
+export async function getPool(): Promise<Pool | null> {
+  // Ensure pool is initialized
+  await getDb();
+  return _pool;
+}
+
 // ============= USER FUNCTIONS =============
 
 export async function upsertUser(user: InsertUser): Promise<void> {

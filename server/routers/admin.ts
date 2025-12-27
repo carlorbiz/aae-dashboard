@@ -26,8 +26,14 @@ export const adminRouter = router({
       try {
         results.push('🏗️ Starting database initialization...');
 
+        // Get database pool
+        const pool = await db.getPool();
+        if (!pool) {
+          throw new Error('Database pool not available');
+        }
+
         // Check if database is already initialized
-        const checkQuery = await db.database.query(`
+        const checkQuery = await pool.query(`
           SELECT table_name
           FROM information_schema.tables
           WHERE table_schema = 'public'
@@ -41,7 +47,7 @@ export const adminRouter = router({
           results.push('📦 Checking platform enum...');
 
           try {
-            await db.database.query(`ALTER TYPE platform ADD VALUE IF NOT EXISTS 'gamma';`);
+            await pool.query(`ALTER TYPE platform ADD VALUE IF NOT EXISTS 'gamma';`);
             results.push('✓ Added gamma to platform enum');
           } catch (error: any) {
             if (error.code === '42710') {
@@ -52,7 +58,7 @@ export const adminRouter = router({
           }
 
           try {
-            await db.database.query(`ALTER TYPE platform ADD VALUE IF NOT EXISTS 'docsautomator';`);
+            await pool.query(`ALTER TYPE platform ADD VALUE IF NOT EXISTS 'docsautomator';`);
             results.push('✓ Added docsautomator to platform enum');
           } catch (error: any) {
             if (error.code === '42710') {
@@ -63,7 +69,7 @@ export const adminRouter = router({
           }
 
           // Verify
-          const enumsQuery = await db.database.query(`
+          const enumsQuery = await pool.query(`
             SELECT unnest(enum_range(NULL::platform))::text AS platform_value
             ORDER BY platform_value;
           `);
@@ -91,7 +97,7 @@ export const adminRouter = router({
           .filter(s => s.length > 0);
 
         for (const statement of statements) {
-          await db.database.query(statement);
+          await pool.query(statement);
         }
 
         results.push(`✓ Base migration complete (${statements.length} statements)`);
@@ -109,7 +115,7 @@ export const adminRouter = router({
 
         for (const statement of enumStatements) {
           try {
-            await db.database.query(statement);
+            await pool.query(statement);
           } catch (error: any) {
             if (error.code === '42710') {
               // Ignore "already exists" errors
@@ -122,7 +128,7 @@ export const adminRouter = router({
         results.push(`✓ Platform enum migration complete (${enumStatements.length} statements)`);
 
         // Verify
-        const tablesQuery = await db.database.query(`
+        const tablesQuery = await pool.query(`
           SELECT table_name
           FROM information_schema.tables
           WHERE table_schema = 'public'
@@ -134,7 +140,7 @@ export const adminRouter = router({
           results.push(`   - ${row.table_name}`);
         });
 
-        const enumsQuery = await db.database.query(`
+        const enumsQuery = await pool.query(`
           SELECT unnest(enum_range(NULL::platform))::text AS platform_value
           ORDER BY platform_value;
         `);
