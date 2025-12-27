@@ -271,20 +271,28 @@ export const adminRouter = router({
         ];
 
         for (const config of platforms) {
-          await db.upsertPlatformIntegration({
-            userId: input.userId,
-            platform: config.platform,
-            status: "connected",
-            lastSynced: new Date(),
-            metadata: {
-              apiCredentials: config.apiCredentials,
-              baseUrl: config.baseUrl,
-              description: config.description,
-            },
-            errorMessage: null,
-          });
+          try {
+            results.push(`📦 Processing ${config.platform.toUpperCase()}...`);
 
-          results.push(`✅ ${config.platform.toUpperCase()} - Configured`);
+            await db.upsertPlatformIntegration({
+              userId: input.userId,
+              platform: config.platform,
+              status: "connected",
+              lastSynced: new Date(),
+              metadata: {
+                apiCredentials: config.apiCredentials,
+                baseUrl: config.baseUrl,
+                description: config.description,
+              },
+            });
+
+            results.push(`✅ ${config.platform.toUpperCase()} - Configured`);
+          } catch (platformError: any) {
+            results.push(`❌ ${config.platform.toUpperCase()} - Failed`);
+            results.push(`   Error: ${platformError.message || String(platformError)}`);
+            results.push(`   Details: ${JSON.stringify(platformError, null, 2)}`);
+            throw platformError; // Re-throw to trigger outer catch
+          }
         }
 
         results.push('\n✨ Platform seeding complete!');
