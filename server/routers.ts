@@ -33,7 +33,7 @@ export const appRouter = router({
     
     upsert: protectedProcedure
       .input(z.object({
-        platform: z.enum(["notion", "google_drive", "github", "slack", "railway", "docker", "zapier", "mcp"]),
+        platform: z.enum(["notion", "google_drive", "github", "slack", "railway", "docker", "zapier", "mcp", "gamma", "docsautomator"]),
         status: z.enum(["connected", "disconnected", "error"]),
         lastSynced: z.date().optional(),
         metadata: z.any().optional(),

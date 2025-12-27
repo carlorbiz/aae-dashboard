@@ -2,7 +2,7 @@ import { pgTable, pgEnum, serial, text, timestamp, varchar, boolean, jsonb, inte
 
 // Define PostgreSQL enums
 export const userRoleEnum = pgEnum("role", ["user", "admin"]);
-export const platformEnum = pgEnum("platform", ["notion", "google_drive", "github", "slack", "railway", "docker", "zapier", "mcp"]);
+export const platformEnum = pgEnum("platform", ["notion", "google_drive", "github", "slack", "railway", "docker", "zapier", "mcp", "gamma", "docsautomator"]);
 export const integrationStatusEnum = pgEnum("integration_status", ["connected", "disconnected", "error"]);
 export const workflowTypeEnum = pgEnum("workflow_type", ["n8n", "zapier", "mcp"]);
 export const workflowStatusEnum = pgEnum("workflow_status", ["active", "paused", "error", "disabled"]);
