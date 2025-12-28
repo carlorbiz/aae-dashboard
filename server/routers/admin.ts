@@ -68,6 +68,23 @@ export const adminRouter = router({
             }
           }
 
+          // Add unique constraint if not exists
+          results.push('📦 Checking unique constraint...');
+          try {
+            await pool.query(`
+              ALTER TABLE "platform_integrations"
+              ADD CONSTRAINT "platform_integrations_userId_platform_unique"
+              UNIQUE("userId","platform");
+            `);
+            results.push('✓ Added unique constraint on (userId, platform)');
+          } catch (error: any) {
+            if (error.code === '42P07') {
+              results.push('⊙ Unique constraint already exists');
+            } else {
+              throw error;
+            }
+          }
+
           // Verify
           const enumsQuery = await pool.query(`
             SELECT unnest(enum_range(NULL::platform))::text AS platform_value
@@ -129,6 +146,32 @@ export const adminRouter = router({
         }
 
         results.push(`✓ Platform enum migration complete (${enumStatements.length} statements)`);
+
+        // Run unique constraint migration
+        results.push('📦 Running unique constraint migration...');
+        const uniqueMigrationPath = join(projectRoot, 'drizzle', '0002_fat_groot.sql');
+        const uniqueMigrationSQL = readFileSync(uniqueMigrationPath, 'utf-8');
+
+        const uniqueStatements = uniqueMigrationSQL
+          .split('-->').join('')
+          .split('statement-breakpoint')
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+
+        for (const statement of uniqueStatements) {
+          try {
+            await pool.query(statement);
+          } catch (error: any) {
+            if (error.code === '42P07') {
+              // Ignore "already exists" errors for constraints
+              results.push('   ⊙ Constraint already exists');
+              continue;
+            }
+            throw error;
+          }
+        }
+
+        results.push(`✓ Unique constraint migration complete (${uniqueStatements.length} statements)`);
 
         // Verify
         const tablesQuery = await pool.query(`

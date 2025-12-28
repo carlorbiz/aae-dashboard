@@ -1,4 +1,4 @@
-import { pgTable, pgEnum, serial, text, timestamp, varchar, boolean, jsonb, integer } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, serial, text, timestamp, varchar, boolean, jsonb, integer, unique } from "drizzle-orm/pg-core";
 
 // Define PostgreSQL enums
 export const userRoleEnum = pgEnum("role", ["user", "admin"]);
@@ -42,7 +42,9 @@ export const platformIntegrations = pgTable("platform_integrations", {
   errorMessage: text("errorMessage"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  userPlatformUnique: unique().on(table.userId, table.platform),
+}));
 
 export type PlatformIntegration = typeof platformIntegrations.$inferSelect;
 export type InsertPlatformIntegration = typeof platformIntegrations.$inferInsert;
