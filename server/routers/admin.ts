@@ -288,12 +288,20 @@ export const adminRouter = router({
       try {
         results.push('🌱 Seeding API platform integrations...');
 
+        // Get API keys from environment variables
+        const gammaApiKey = process.env.GAMMA_API_KEY;
+        const docsautomatorApiKey = process.env.DOCSAUTOMATOR_API_KEY;
+
+        if (!gammaApiKey || !docsautomatorApiKey) {
+          throw new Error('Missing required API keys: GAMMA_API_KEY and DOCSAUTOMATOR_API_KEY must be set in environment');
+        }
+
         const platforms = [
           {
             platform: 'gamma' as const,
             apiCredentials: {
               headers: {
-                "X-API-KEY": "sk-gamma-O6q9C8hKRZr8yNERNEP283NZu5POux7Ya2O1HvjuE",
+                "X-API-KEY": gammaApiKey,
                 "Content-Type": "application/json"
               }
             },
@@ -304,7 +312,7 @@ export const adminRouter = router({
             platform: 'docsautomator' as const,
             apiCredentials: {
               headers: {
-                "Authorization": "Bearer 3e634bb0-452f-46b8-9ed2-d19ba4e0c1dc",
+                "Authorization": `Bearer ${docsautomatorApiKey}`,
                 "Content-Type": "application/json"
               }
             },
