@@ -7,7 +7,8 @@
  *   ts-node scripts/get-user-id.ts
  */
 
-import * as db from "../server/db";
+import type { QueryResult } from "pg";
+import { getPool } from "../server/db";
 
 interface UserRow {
   id: number;
@@ -17,20 +18,20 @@ interface UserRow {
   lastSignedIn: Date | null;
 }
 
-async function getUserId() {
+async function getUserId(): Promise<void> {
   console.log("\n🔍 Looking up users in AAE Dashboard database...\n");
 
   try {
-    const database = await db.getDb();
+    const pool = await getPool();
 
-    if (!database) {
+    if (!pool) {
       console.error("❌ Error: Could not connect to database");
       console.error("Make sure DATABASE_URL environment variable is set\n");
       process.exit(1);
     }
 
     // Query all users
-    const result = await database.query<UserRow>(`
+    const result: QueryResult<UserRow> = await pool.query(`
       SELECT id, name, email, "openId", "lastSignedIn"
       FROM users
       ORDER BY id;
@@ -47,7 +48,7 @@ async function getUserId() {
     console.log("│ ID │ Name                │ Email                    │ Last Signed In       │");
     console.log("├────┼─────────────────────┼──────────────────────────┼──────────────────────┤");
 
-    result.rows.forEach((user) => {
+    result.rows.forEach((user: UserRow) => {
       const id = String(user.id).padEnd(2);
       const name = (user.name || "—").padEnd(19);
       const email = (user.email || "—").padEnd(24);
