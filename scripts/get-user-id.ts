@@ -9,6 +9,14 @@
 
 import * as db from "../server/db";
 
+interface UserRow {
+  id: number;
+  name: string | null;
+  email: string | null;
+  openId: string | null;
+  lastSignedIn: Date | null;
+}
+
 async function getUserId() {
   console.log("\n🔍 Looking up users in AAE Dashboard database...\n");
 
@@ -22,7 +30,7 @@ async function getUserId() {
     }
 
     // Query all users
-    const result = await database.query(`
+    const result = await database.query<UserRow>(`
       SELECT id, name, email, "openId", "lastSignedIn"
       FROM users
       ORDER BY id;
